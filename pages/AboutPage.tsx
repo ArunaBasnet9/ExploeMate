@@ -6,7 +6,7 @@ import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const AboutPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const AboutPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
     gsap.utils.toArray('.about-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
@@ -21,7 +21,7 @@ const AboutPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
 
   return (
     <div className="w-full relative">
-       <Navbar onNavigate={onNavigate} />
+       <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
        {/* About Hero */}
        <section className="relative pt-40 pb-20 overflow-hidden">

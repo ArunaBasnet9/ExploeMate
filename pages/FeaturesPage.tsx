@@ -39,7 +39,7 @@ const FeatureSection = ({ title, subTitle, description, icon: Icon, align = 'lef
   </div>
 );
 
-const FeaturesPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
     // Staggered animation for the overview cards
     gsap.fromTo('.overview-card', 
@@ -73,7 +73,7 @@ const FeaturesPage = ({ onNavigate }: { onNavigate: (page: string) => void }) =>
 
   return (
     <div className="w-full relative bg-slate-50/50">
-       <Navbar onNavigate={onNavigate} />
+       <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
        {/* Hero */}
        <section className="relative pt-40 pb-20 overflow-hidden bg-white">

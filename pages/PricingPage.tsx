@@ -68,7 +68,7 @@ const PricingCard = ({
   </div>
 );
 
-const PricingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const PricingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [isAnnual, setIsAnnual] = useState(true);
 
   useEffect(() => {
@@ -143,7 +143,7 @@ const PricingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
 
   return (
     <div className="w-full relative">
-       <Navbar onNavigate={onNavigate} />
+       <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
        {/* Hero */}
        <section className="relative pt-40 pb-20 overflow-hidden">

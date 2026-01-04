@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { ArrowRight, Compass, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Compass, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { InputField } from '../components/SharedUI';
 
 const LOGIN_IMAGES = [
@@ -13,6 +13,11 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Login State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -73,11 +78,26 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onLogin();
-    }, 1500);
+    setError('');
+
+    // Temporary Credentials Validation
+    if (email === 'user@exploremate.com' && password === '123456') {
+      setIsLoading(true);
+      // Simulate network request
+      setTimeout(() => {
+        setIsLoading(false);
+        onLogin();
+      }, 1500);
+    } else {
+      setError('Invalid credentials. Please try again.');
+      // Shake animation for error
+      if (formRef.current) {
+        gsap.fromTo(formRef.current, 
+          { x: -10 }, 
+          { x: 10, duration: 0.1, repeat: 5, yoyo: true, clearProps: 'x' }
+        );
+      }
+    }
   };
 
   const splitText = (text: string) => {
@@ -144,16 +164,31 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
           <div className="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-bl-[4rem] -z-0"></div>
           
           <div className="w-full max-w-sm relative z-10">
-            <div className="mb-10">
+            <div className="mb-8">
               <h1 ref={titleRef} className="text-4xl lg:text-5xl font-grotesk font-bold text-slate-900 mb-3 tracking-tight overflow-hidden pb-2">
                 {splitText("Welcome Back")}
               </h1>
               <p className="text-slate-500 font-medium">Please enter your details to continue.</p>
+              
+              {/* Credential Hint */}
+              <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs text-sky-800 flex flex-col gap-1">
+                <span className="font-bold uppercase tracking-wider flex items-center gap-1"><AlertCircle size={12}/> Demo Credentials</span>
+                <span className="font-mono">Email: user@exploremate.com</span>
+                <span className="font-mono">Pass: 123456</span>
+              </div>
             </div>
 
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
               <div className="form-item">
-                <InputField label="Email Address" type="email" placeholder="nomad@example.com" required className="!bg-slate-50 border-slate-100 focus:!bg-white" />
+                <InputField 
+                  label="Email Address" 
+                  type="email" 
+                  placeholder="nomad@example.com" 
+                  required 
+                  className={`!bg-slate-50 focus:!bg-white ${error ? 'border-red-300 bg-red-50' : 'border-slate-100'}`}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
               
               <div className="relative form-item">
@@ -162,7 +197,9 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                   type={showPassword ? "text" : "password"} 
                   placeholder="••••••••" 
                   required 
-                  className="!bg-slate-50 border-slate-100 focus:!bg-white"
+                  className={`!bg-slate-50 focus:!bg-white ${error ? 'border-red-300 bg-red-50' : 'border-slate-100'}`}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   icon={
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-sky-600 transition-colors focus:outline-none p-1">
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -171,7 +208,13 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                 />
               </div>
 
-              <div className="form-item flex justify-end pb-4">
+              {error && (
+                <div className="text-red-500 text-sm font-bold flex items-center gap-2 animate-pulse">
+                  <AlertCircle size={16} /> {error}
+                </div>
+              )}
+
+              <div className="form-item flex justify-end pb-4 pt-2">
                  <button type="button" className="text-sm font-bold text-sky-600 hover:text-sky-800 transition-colors">Forgot Password?</button>
               </div>
 

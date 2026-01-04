@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Twitter, Globe, Menu, X } from 'lucide-react';
+import { Plane, Twitter, Globe, Menu, X, Smartphone } from 'lucide-react';
 
 export const Footer = ({ onNavigate }: { onNavigate: (page: string) => void }) => (
   <footer className="bg-white pt-24 pb-12 border-t border-slate-100 relative z-10">
@@ -50,7 +50,7 @@ export const Footer = ({ onNavigate }: { onNavigate: (page: string) => void }) =
   </footer>
 );
 
-export const Navbar = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -76,15 +76,26 @@ export const Navbar = ({ onNavigate }: { onNavigate: (page: string) => void }) =
           <button onClick={() => onNavigate('about')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">About</button>
           <button onClick={() => onNavigate('features')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Features</button>
           <button onClick={() => onNavigate('blog')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Blog</button>
+          <button className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors flex items-center gap-2">
+             <Smartphone size={16} /> Download App
+          </button>
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <button onClick={() => onNavigate('login')} className="text-sm font-bold text-slate-700 hover:text-sky-600 transition-colors">
-            Log In
-          </button>
-          <button onClick={() => onNavigate('signup')} className="px-5 py-2.5 bg-sky-900 text-white rounded-full text-sm font-bold hover:bg-sky-800 transition-colors shadow-lg shadow-sky-900/20">
-            Sign Up
-          </button>
+          {isLoggedIn ? (
+             <button onClick={() => onNavigate('dashboard')} className="px-5 py-2.5 bg-sky-900 text-white rounded-full text-sm font-bold hover:bg-sky-800 transition-colors shadow-lg shadow-sky-900/20">
+               Dashboard
+             </button>
+          ) : (
+            <>
+              <button onClick={() => onNavigate('login')} className="text-sm font-bold text-slate-700 hover:text-sky-600 transition-colors">
+                Log In
+              </button>
+              <button onClick={() => onNavigate('signup')} className="px-5 py-2.5 bg-sky-900 text-white rounded-full text-sm font-bold hover:bg-sky-800 transition-colors shadow-lg shadow-sky-900/20">
+                Sign Up
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle */}
@@ -100,13 +111,25 @@ export const Navbar = ({ onNavigate }: { onNavigate: (page: string) => void }) =
           <button onClick={() => { onNavigate('about'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">About</button>
           <button onClick={() => { onNavigate('features'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Features</button>
           <button onClick={() => { onNavigate('blog'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Blog</button>
+          <button className="text-left text-sm font-semibold text-slate-600 py-2 flex items-center gap-2">
+             <Smartphone size={16} /> Download App
+          </button>
           <hr className="border-slate-100" />
-          <button onClick={() => { onNavigate('login'); setIsOpen(false); }} className="w-full py-3 text-center font-bold text-slate-700 bg-slate-50 rounded-xl">
-            Log In
-          </button>
-          <button onClick={() => { onNavigate('signup'); setIsOpen(false); }} className="w-full py-3 text-center font-bold text-white bg-sky-900 rounded-xl">
-            Sign Up
-          </button>
+          
+          {isLoggedIn ? (
+            <button onClick={() => { onNavigate('dashboard'); setIsOpen(false); }} className="w-full py-3 text-center font-bold text-white bg-sky-900 rounded-xl">
+              Dashboard
+            </button>
+          ) : (
+            <>
+              <button onClick={() => { onNavigate('login'); setIsOpen(false); }} className="w-full py-3 text-center font-bold text-slate-700 bg-slate-50 rounded-xl">
+                Log In
+              </button>
+              <button onClick={() => { onNavigate('signup'); setIsOpen(false); }} className="w-full py-3 text-center font-bold text-white bg-sky-900 rounded-xl">
+                Sign Up
+              </button>
+            </>
+          )}
         </div>
       )}
     </nav>

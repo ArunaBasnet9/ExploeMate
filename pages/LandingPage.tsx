@@ -33,7 +33,7 @@ const DestinationCard = ({ image, title, location, rating, price, index }: any) 
   </div>
 );
 
-const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const heroRef = useRef(null);
   const textRef = useRef(null);
   
@@ -52,7 +52,8 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
     )
     .fromTo('.hero-desc',
       { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
+      { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out',
+      },
       "-=0.6"
     )
     .fromTo('.hero-btn',
@@ -121,7 +122,7 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
 
   return (
     <div className="w-full relative bg-slate-50/50">
-      <Navbar onNavigate={onNavigate} />
+      <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden px-4 md:px-8">
@@ -141,10 +142,10 @@ const LandingPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => 
             
             <div className="flex items-center gap-4">
               <button 
-                onClick={() => onNavigate('signup')}
+                onClick={() => onNavigate(isLoggedIn ? 'dashboard' : 'signup')}
                 className="hero-btn px-8 py-4 bg-sky-900 text-white rounded-2xl font-bold hover:bg-sky-800 transition-all shadow-lg shadow-sky-900/20 flex items-center gap-2 group"
               >
-                Start Your Journey <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                {isLoggedIn ? 'Go to Dashboard' : 'Start Your Journey'} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button 
                 onClick={() => onNavigate('features')}

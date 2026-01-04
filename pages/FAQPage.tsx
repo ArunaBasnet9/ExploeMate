@@ -31,7 +31,7 @@ const FAQItem = ({ question, answer, isOpen, onClick }: { question: string, answ
   );
 };
 
-const FAQPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const FAQPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ const FAQPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
 
   return (
     <div className="w-full relative">
-       <Navbar onNavigate={onNavigate} />
+       <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
        {/* FAQ Hero */}
        <section className="relative pt-40 pb-16 overflow-hidden">

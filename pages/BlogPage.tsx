@@ -32,7 +32,7 @@ const BlogCard = ({ image, category, title, excerpt, date, readTime }: any) => (
   </div>
 );
 
-const BlogPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
+const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
     gsap.utils.toArray('.blog-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
@@ -106,7 +106,7 @@ const BlogPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
 
   return (
     <div className="w-full relative">
-      <Navbar onNavigate={onNavigate} />
+      <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
 
       {/* Blog Hero */}
       <section className="relative pt-40 pb-20 overflow-hidden">
