@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { Plane } from 'lucide-react';
+import { Plane, MapPin } from 'lucide-react';
 import { GlobalAestheticBackground } from './components/SharedUI';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
@@ -16,9 +16,10 @@ import ProfilePage from './pages/ProfilePage';
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLHeadingElement>(null);
-  const subTextRef = useRef<HTMLParagraphElement>(null);
+  const planeRef = useRef<HTMLDivElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -26,48 +27,56 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         onComplete: onComplete
       });
 
-      // Entry
-      tl.fromTo(logoRef.current,
-        { scale: 0, rotation: -45, opacity: 0 },
-        { scale: 1, rotation: 0, opacity: 1, duration: 1.2, ease: "elastic.out(1, 0.5)" }
-      )
-      .fromTo(textRef.current,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out" },
-        "-=0.6"
-      )
-      .fromTo(subTextRef.current,
-        { y: 10, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" },
-        "-=0.4"
+      // 0. Initial States
+      gsap.set(containerRef.current, { clipPath: "inset(0% 0% 0% 0%)" });
+      
+      // 1. Draw Flight Path
+      if (pathRef.current) {
+        const length = pathRef.current.getTotalLength();
+        gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
+        
+        tl.to(pathRef.current, {
+          strokeDashoffset: 0,
+          duration: 1.5,
+          ease: "power2.inOut"
+        });
+      }
+
+      // 2. Plane Entrance (following the path visually)
+      tl.fromTo(planeRef.current,
+        { x: -100, y: 50, opacity: 0, scale: 0.5, rotation: -15 },
+        { x: 0, y: 0, opacity: 1, scale: 1, rotation: 0, duration: 1.2, ease: "back.out(1.7)" },
+        "-=1.0"
       );
 
-      // Exit Sequence
-      tl.to(logoRef.current, {
-         scale: 0.8,
-         duration: 0.3,
-         ease: "power2.in",
-         delay: 0.8
-      })
-      .to(logoRef.current, {
-         x: '100vw',
-         y: -200,
-         rotation: 45,
-         scale: 1.5,
-         duration: 1.2,
-         ease: "power2.in"
-      })
-      .to([textRef.current, subTextRef.current], {
-         opacity: 0,
-         y: -20,
-         duration: 0.4,
-         stagger: 0.1
-      }, "<")
-      .to(containerRef.current, {
-         yPercent: -100,
-         duration: 1,
-         ease: "power4.inOut"
+      // 3. Text Reveal (Masked Slide Up)
+      tl.fromTo(textRef.current?.children || [],
+        { y: 50, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: "power3.out" },
+        "-=0.5"
+      );
+
+      // 4. Progress Bar (Without Text)
+      tl.to(progressRef.current, {
+        width: "100%",
+        duration: 1.5,
+        ease: "expo.inOut"
       }, "-=0.8");
+      
+      // 5. Exit Sequence (Cinematic Slide Up with Parallax)
+      // Move elements slightly down while container moves up
+      tl.to([planeRef.current, textRef.current], {
+        y: 100,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.in"
+      }, "+=0.2");
+
+      tl.to(containerRef.current, {
+        clipPath: "inset(0% 0% 100% 0%)",
+        duration: 1,
+        ease: "power4.inOut"
+      }, "-=0.6");
 
     }, containerRef);
 
@@ -75,36 +84,64 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   }, [onComplete]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[100] bg-sky-950 flex flex-col items-center justify-center text-white overflow-hidden">
-       {/* Decorative backgrounds */}
-       <div className="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] bg-sky-600/30 rounded-full blur-[120px] animate-pulse"></div>
-       <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-indigo-600/30 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }}></div>
-       
-       {/* Particles */}
-       <div className="absolute inset-0 opacity-20">
-          {[...Array(20)].map((_, i) => (
-             <div key={i} className="absolute bg-white rounded-full" 
-                  style={{
-                    top: `${Math.random() * 100}%`,
-                    left: `${Math.random() * 100}%`,
-                    width: `${Math.random() * 4 + 1}px`,
-                    height: `${Math.random() * 4 + 1}px`,
-                    animation: `float ${Math.random() * 10 + 10}s infinite linear`
-                  }}
-             />
-          ))}
+    <div ref={containerRef} className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center text-white overflow-hidden">
+       {/* Background Aurora Effects */}
+       <div className="absolute inset-0 z-0">
+          <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-sky-600/20 rounded-full blur-[100px] animate-float"></div>
+          <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '-2s' }}></div>
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
        </div>
 
-       <div className="relative z-10 flex flex-col items-center">
-          <div ref={logoRef} className="bg-white p-6 rounded-3xl shadow-[0_0_50px_rgba(14,165,233,0.3)] mb-8 text-sky-600">
-             <Plane size={64} fill="currentColor" strokeWidth={1.5} />
+       {/* SVG Path Background */}
+       <svg className="absolute inset-0 w-full h-full z-0 opacity-30 pointer-events-none">
+          <path 
+            ref={pathRef}
+            d="M -100,500 Q 400,200 800,500 T 2000,300" 
+            fill="none" 
+            stroke="url(#gradient)" 
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="rgba(14, 165, 233, 0)" />
+              <stop offset="50%" stopColor="#0ea5e9" />
+              <stop offset="100%" stopColor="rgba(14, 165, 233, 0)" />
+            </linearGradient>
+          </defs>
+       </svg>
+
+       <div className="relative z-10 flex flex-col items-center w-full max-w-md px-6">
+          {/* Logo Container */}
+          <div ref={planeRef} className="relative mb-8">
+             <div className="absolute inset-0 bg-sky-500 blur-2xl opacity-20 rounded-full"></div>
+             <div className="w-24 h-24 bg-gradient-to-tr from-sky-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.4)] border border-white/20 relative z-10">
+                <Plane size={48} className="text-white transform -rotate-45" strokeWidth={1.5} />
+             </div>
+             {/* Decorative pin indicating destination */}
+             <div className="absolute -top-4 -right-4 bg-white text-sky-600 p-2 rounded-full shadow-lg animate-bounce">
+                <MapPin size={16} fill="currentColor" />
+             </div>
           </div>
-          <h1 ref={textRef} className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white via-sky-100 to-sky-200">
-             ExploreMate
-          </h1>
-          <p ref={subTextRef} className="text-sky-200/80 text-lg md:text-xl font-medium tracking-wide uppercase">
-             Your Journey Begins Here
-          </p>
+
+          {/* Text Container */}
+          <div ref={textRef} className="text-center mb-12">
+             <h1 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-2">
+               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-white via-sky-100 to-sky-300">Explore</span>
+               <span className="inline-block text-sky-500">Mate</span>
+             </h1>
+             <p className="text-slate-400 font-medium tracking-widest text-sm uppercase">
+               AI-Powered Travel Companion
+             </p>
+          </div>
+
+          {/* Loading System - Minimalist Bar */}
+          <div className="w-full relative mt-4 px-8">
+             <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div ref={progressRef} className="h-full bg-gradient-to-r from-sky-400 to-blue-600 w-0 rounded-full shadow-[0_0_20px_rgba(56,189,248,0.5)]"></div>
+             </div>
+          </div>
        </div>
     </div>
   );
@@ -167,7 +204,8 @@ export default function App() {
     <div className="min-h-screen w-full relative overflow-x-hidden">
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <GlobalAestheticBackground />
-      <div className={`transition-opacity duration-1000 ${showSplash ? 'opacity-0' : 'opacity-100'}`}>
+      {/* We remove opacity transition here because the splash screen handles the reveal via clip-path */}
+      <div className="relative z-0">
          {renderView()}
       </div>
     </div>
