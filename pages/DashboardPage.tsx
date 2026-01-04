@@ -40,14 +40,17 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                 );
                 const weatherData = await weatherRes.json();
                 
-                // 2. Get Location Name (Reverse Geocoding)
+                // 2. Get Location Name (Reverse Geocoding via OpenStreetMap Nominatim)
+                // Using OpenStreetMap API as requested for exact location details
                 const geoRes = await fetch(
-                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12`
                 );
                 const geoData = await geoRes.json();
                 
-                const city = geoData.city || geoData.locality || geoData.principalSubdivision || "Unknown Location";
-                const country = geoData.countryName || "";
+                const addr = geoData.address || {};
+                // Prioritize granular location names (City -> Town -> Village -> Suburb)
+                const city = addr.city || addr.town || addr.village || addr.municipality || addr.suburb || addr.neighbourhood || "Unknown Location";
+                const country = addr.country || "";
 
                 setWeather({
                     temp: Math.round(weatherData.current.temperature_2m),
@@ -78,7 +81,8 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                     // Error/Denied: Fallback to Kathmandu
                     fetchWeatherData(27.7172, 85.3240);
                 },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                // Increased timeout to 10s and enabled high accuracy for better precision
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         } else {
             // Not Supported: Fallback to Kathmandu
