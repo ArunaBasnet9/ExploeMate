@@ -1,18 +1,38 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { ArrowRight, Compass, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { ArrowRight, Compass, Eye, EyeOff, User, Lock, MapPin, AlertCircle } from 'lucide-react';
 import { InputField } from '../components/SharedUI';
+import { LOGIN_IMAGES } from '../assets/images';
 
-const LOGIN_IMAGES = [
-  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80", // Aerial Wing
-  "https://images.unsplash.com/photo-1556388169-db19adc96088?auto=format&fit=crop&q=80", // Modern Terminal
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80"  // Luxury Resort
+// Nepal Specific Slides for Login
+const LOGIN_SLIDES = [
+  {
+    id: 1,
+    image: LOGIN_IMAGES.EVEREST,
+    title: "Summit the World",
+    location: "Mt. Everest, Solukhumbu",
+    description: "Experience the breathtaking heights of the Himalayas."
+  },
+  {
+    id: 2,
+    image: LOGIN_IMAGES.BOUDHANATH,
+    title: "Spiritual Awakening",
+    location: "Boudhanath, Kathmandu",
+    description: "Find peace in the heart of ancient culture."
+  },
+  {
+    id: 3,
+    image: LOGIN_IMAGES.POKHARA,
+    title: "Serenity Awaits",
+    location: "Phewa Lake, Pokhara",
+    description: "Reflect on nature's beauty by the tranquil waters."
+  }
 ];
 
 const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (page: string) => void }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
   
   // Login State
   const [email, setEmail] = useState('');
@@ -20,224 +40,202 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
   const [error, setError] = useState('');
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  
-  // Image Rotation Timer
+
+  // Auto-rotate slides
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % LOGIN_IMAGES.length);
+      setCurrentSlide((prev) => (prev + 1) % LOGIN_SLIDES.length);
     }, 5000);
     return () => clearInterval(timer);
   }, []);
-  
+
+  // Initial Animation
   useEffect(() => {
     const tl = gsap.timeline();
-
-    // 1. Container entrance
+    
     tl.fromTo(containerRef.current, 
-      { opacity: 0, y: 40, scale: 0.95 }, 
-      { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" }
+      { opacity: 0, scale: 0.95 }, 
+      { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" }
     );
 
-    // 2. Animate Title characters
-    if (titleRef.current) {
-      const chars = titleRef.current.querySelectorAll('.char');
-      tl.fromTo(chars, 
-        { y: 50, opacity: 0, rotateX: -90 }, 
-        { 
-          y: 0, 
-          opacity: 1, 
-          rotateX: 0, 
-          stagger: 0.05, 
-          duration: 0.8, 
-          ease: "back.out(1.7)" 
-        },
+    if (formRef.current) {
+      tl.fromTo(formRef.current.children,
+        { x: -30, opacity: 0 },
+        { x: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: "power2.out" },
         "-=0.4"
       );
     }
-
-    // 3. Animate Form Elements sequentially
-    if (formRef.current) {
-      const elements = formRef.current.children;
-      tl.fromTo(elements,
-        { x: 30, opacity: 0 },
-        { x: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: "power2.out" },
-        "-=0.6"
-      );
-    }
-
-    // 4. Animate left side content
-    tl.fromTo('.left-content-anim',
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, stagger: 0.2, duration: 0.8 },
-      "-=0.8"
-    );
-
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // Temporary Credentials Validation
-    if (email === 'user@exploremate.com' && password === '123456') {
-      setIsLoading(true);
-      // Simulate network request
-      setTimeout(() => {
+    // Simulate API call with specific credentials check
+    setTimeout(() => {
+      if (email === 'rashojban@gmail.com' && password === '12345') {
         setIsLoading(false);
         onLogin();
-      }, 1500);
-    } else {
-      setError('Invalid credentials. Please try again.');
-      // Shake animation for error
-      if (formRef.current) {
-        gsap.fromTo(formRef.current, 
-          { x: -10 }, 
-          { x: 10, duration: 0.1, repeat: 5, yoyo: true, clearProps: 'x' }
-        );
+      } else {
+        setIsLoading(false);
+        setError('Invalid credentials. Please use the temporary login.');
+        // Error Shake Animation
+        if (formRef.current) {
+          gsap.fromTo(formRef.current, { x: -10 }, { x: 0, duration: 0.1, repeat: 5, yoyo: true });
+        }
       }
-    }
-  };
-
-  const splitText = (text: string) => {
-    return text.split('').map((char, index) => (
-      <span key={index} className="char inline-block whitespace-pre relative">
-        {char}
-      </span>
-    ));
+    }, 1500);
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4 md:p-6 relative z-10">
+    <div className="w-full min-h-screen flex items-center justify-center p-4 md:p-6 relative z-10 bg-slate-50">
       <button 
         onClick={() => onNavigate('landing')}
-        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 hover:text-sky-600 transition-colors font-bold z-50 bg-white/50 px-4 py-2 rounded-full backdrop-blur-md"
+        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-slate-500 hover:text-sky-600 transition-colors font-bold z-50 bg-white/80 px-4 py-2 rounded-full backdrop-blur-md shadow-sm"
       >
         <ArrowRight size={18} className="rotate-180" /> Back to Home
       </button>
 
-      <div ref={containerRef} className="bg-white/90 backdrop-blur-xl w-full max-w-[1000px] rounded-[2.5rem] shadow-2xl border border-white/60 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-        {/* Left Side Visual */}
-        <div className="w-full md:w-1/2 bg-sky-900 relative p-12 flex flex-col justify-between overflow-hidden group">
-          {/* Rotating Background Images */}
-          {LOGIN_IMAGES.map((img, index) => (
-            <div 
-              key={index}
-              className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${
-                index === currentImageIndex ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
-              }`}
-              style={{ backgroundImage: `url('${img}')` }}
-            ></div>
-          ))}
-          
-          {/* Clear Gradient Overlay for Text Readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-sky-900 via-sky-900/60 to-transparent z-0"></div>
-          
-          <div className="relative z-10">
-            <div className="left-content-anim bg-white/20 backdrop-blur-md w-fit p-4 rounded-2xl mb-8 border border-white/20 shadow-lg">
-              <Compass className="text-white" size={32} />
-            </div>
-            <h2 className="left-content-anim text-4xl lg:text-5xl font-grotesk font-bold text-white mb-6 leading-tight drop-shadow-md">
-              Your Journey <br/> 
-              <span className="text-sky-200">Begins Here.</span>
-            </h2>
-            <p className="left-content-anim text-sky-50 text-lg max-w-sm leading-relaxed drop-shadow-sm font-medium">
-              Log in to access your AI-curated itineraries, saved gems, and personal travel dashboard.
-            </p>
-          </div>
-
-          {/* Dynamic Indicators */}
-          <div className="relative z-10 flex gap-2 left-content-anim">
-            {LOGIN_IMAGES.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setCurrentImageIndex(i)}
-                className={`h-1.5 rounded-full transition-all duration-500 shadow-sm ${i === currentImageIndex ? 'bg-white w-12' : 'bg-white/40 w-8 hover:bg-white/60'}`}
-              ></button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Side Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 lg:p-16 flex items-center justify-center bg-white relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-bl-[4rem] -z-0"></div>
-          
-          <div className="w-full max-w-sm relative z-10">
-            <div className="mb-8">
-              <h1 ref={titleRef} className="text-4xl lg:text-5xl font-grotesk font-bold text-slate-900 mb-3 tracking-tight overflow-hidden pb-2">
-                {splitText("Welcome Back")}
+      <div ref={containerRef} className="bg-white w-full max-w-[1100px] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[650px]">
+        
+        {/* Left Side - Form */}
+        <div className="w-full md:w-[45%] p-8 md:p-12 flex flex-col justify-center relative">
+          <div className="max-w-sm mx-auto w-full relative z-10">
+            <div className="mb-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 text-sky-600 font-bold text-xs uppercase tracking-wider mb-6 border border-sky-100">
+                <Compass size={14} /> Welcome Back
+              </div>
+              <h1 className="text-4xl font-grotesk font-bold text-slate-900 mb-3">
+                Log In to <br/> ExploreMate
               </h1>
-              <p className="text-slate-500 font-medium">Please enter your details to continue.</p>
-              
-              {/* Credential Hint */}
-              <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-xl text-xs text-sky-800 flex flex-col gap-1">
-                <span className="font-bold uppercase tracking-wider flex items-center gap-1"><AlertCircle size={12}/> Demo Credentials</span>
-                <span className="font-mono">Email: user@exploremate.com</span>
-                <span className="font-mono">Pass: 123456</span>
-              </div>
+              <p className="text-slate-500 font-medium">
+                Continue your journey through the Himalayas.
+              </p>
             </div>
 
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
-              <div className="form-item">
-                <InputField 
-                  label="Email Address" 
-                  type="email" 
-                  placeholder="nomad@example.com" 
-                  required 
-                  className={`!bg-slate-50 focus:!bg-white ${error ? 'border-red-300 bg-red-50' : 'border-slate-100'}`}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
+              <InputField 
+                label="Email Address" 
+                type="email" 
+                placeholder="rashojban@gmail.com" 
+                required 
+                icon={<User size={18} />}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
               
-              <div className="relative form-item">
+              <div className="relative">
                 <InputField 
                   label="Password" 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
+                  placeholder="•••••" 
                   required 
-                  className={`!bg-slate-50 focus:!bg-white ${error ? 'border-red-300 bg-red-50' : 'border-slate-100'}`}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   icon={
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-sky-600 transition-colors focus:outline-none p-1">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-sky-600 transition-colors">
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
+              <div className="flex justify-between items-center text-sm font-bold text-slate-500 pt-2 pb-4">
+                <label className="flex items-center gap-2 cursor-pointer hover:text-slate-700">
+                  <input type="checkbox" className="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+                  <span>Remember me</span>
+                </label>
+                <button type="button" className="text-sky-600 hover:underline">Forgot Password?</button>
+              </div>
+
               {error && (
-                <div className="text-red-500 text-sm font-bold flex items-center gap-2 animate-pulse">
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-500 text-sm font-medium animate-in slide-in-from-top-2">
                   <AlertCircle size={16} /> {error}
                 </div>
               )}
 
-              <div className="form-item flex justify-end pb-4 pt-2">
-                 <button type="button" className="text-sm font-bold text-sky-600 hover:text-sky-800 transition-colors">Forgot Password?</button>
-              </div>
-
-              <div className="form-item">
-                <button 
-                  type="submit" 
-                  disabled={isLoading} 
-                  className="group w-full py-4 bg-slate-900 text-white rounded-2xl font-bold font-grotesk tracking-wide text-lg hover:bg-sky-600 transition-all duration-300 shadow-xl shadow-slate-200 hover:shadow-sky-200 flex items-center justify-center gap-2 overflow-hidden relative"
-                >
-                  <span className="relative z-10">{isLoading ? 'Authenticating...' : 'Sign In'}</span>
-                  {!isLoading && <ArrowRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />}
-                  <div className="absolute inset-0 bg-gradient-to-r from-sky-600 to-sky-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </button>
-              </div>
+              <button 
+                type="submit" 
+                disabled={isLoading} 
+                className={`w-full py-4 bg-sky-900 text-white rounded-2xl font-bold font-grotesk tracking-wide hover:bg-sky-800 transition-all duration-300 shadow-xl shadow-sky-900/10 flex items-center justify-center gap-2 group overflow-hidden relative ${isLoading ? 'cursor-not-allowed opacity-90' : ''}`}
+              >
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                <span>{isLoading ? 'Authenticating...' : 'Log In'}</span>
+                {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
+              </button>
             </form>
-            
-            <div className="mt-10 text-center">
+
+            <div className="mt-8 text-center">
               <p className="text-slate-400 text-sm font-medium">
-                Don't have an account? <button onClick={() => onNavigate('signup')} className="font-bold text-sky-600 hover:underline">Create free account</button>
+                New to ExploreMate? <button onClick={() => onNavigate('signup')} className="font-bold text-sky-600 hover:underline">Create Account</button>
               </p>
+            </div>
+            
+            <div className="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-center">
+              <p className="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Temporary Credentials</p>
+              <div className="flex justify-center gap-4 text-xs font-mono text-slate-600">
+                <span>User: rashojban@gmail.com</span>
+                <span>Pass: 12345</span>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Right Side - Image Slideshow */}
+        <div className="w-full md:w-[55%] relative bg-slate-900 overflow-hidden">
+          {LOGIN_SLIDES.map((slide, index) => (
+            <div 
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img 
+                src={slide.image} 
+                alt={slide.title} 
+                className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-linear"
+                style={{ transform: index === currentSlide ? 'scale(1.1)' : 'scale(1.0)' }}
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+            </div>
+          ))}
+
+          {/* Text Content Layer */}
+          <div className="absolute bottom-0 left-0 w-full p-12 z-20">
+            {LOGIN_SLIDES.map((slide, index) => (
+               index === currentSlide && (
+                <div key={slide.id} className="animate-in slide-in-from-bottom-4 fade-in duration-700">
+                  <div className="flex items-center gap-2 text-sky-300 font-bold uppercase tracking-widest text-xs mb-3">
+                    <MapPin size={14} /> {slide.location}
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-3 leading-tight">
+                    {slide.title}
+                  </h2>
+                  <p className="text-slate-300 text-lg max-w-md leading-relaxed">
+                    {slide.description}
+                  </p>
+                </div>
+               )
+            ))}
+            
+            {/* Slide Indicators */}
+            <div className="flex gap-2 mt-8">
+              {LOGIN_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    i === currentSlide ? 'w-8 bg-white' : 'w-4 bg-white/30 hover:bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
