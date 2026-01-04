@@ -72,8 +72,8 @@ export const Navbar = ({ onNavigate }: { onNavigate: (page: string) => void }) =
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
+          <button onClick={() => onNavigate('landing')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Home</button>
           <button onClick={() => onNavigate('about')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">About</button>
-          <button onClick={() => onNavigate('landing')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Destinations</button>
           <button onClick={() => onNavigate('features')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Features</button>
           <button onClick={() => onNavigate('blog')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Blog</button>
         </div>
@@ -96,8 +96,8 @@ export const Navbar = ({ onNavigate }: { onNavigate: (page: string) => void }) =
       {/* Mobile Menu */}
       {isOpen && (
         <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 p-4 flex flex-col gap-4 shadow-xl md:hidden animate-in slide-in-from-top-2">
+          <button onClick={() => { onNavigate('landing'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Home</button>
           <button onClick={() => { onNavigate('about'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">About</button>
-          <button onClick={() => { onNavigate('landing'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Destinations</button>
           <button onClick={() => { onNavigate('features'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Features</button>
           <button onClick={() => { onNavigate('blog'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Blog</button>
           <hr className="border-slate-100" />
