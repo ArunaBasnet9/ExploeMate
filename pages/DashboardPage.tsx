@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle } from 'lucide-react';
+import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Moon, CloudMoon, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle } from 'lucide-react';
 
 interface WeatherData {
   temp: number;
   code: number;
+  isDay: number; // 1 = Day, 0 = Night
   location: string;
   loading: boolean;
 }
@@ -14,6 +15,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   const [weather, setWeather] = useState<WeatherData>({
     temp: 24,
     code: 0,
+    isDay: 1, 
     location: 'Kathmandu, Nepal', // Default fallback
     loading: true
   });
@@ -22,9 +24,9 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
     // Weather & Location Fetching
     const fetchWeather = async (lat: number, lon: number) => {
         try {
-            // 1. Get Weather Code & Temp
+            // 1. Get Weather Code, Temp & Is_Day
             const weatherRes = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=celsius`
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&temperature_unit=celsius`
             );
             const weatherData = await weatherRes.json();
             
@@ -40,6 +42,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
             setWeather({
                 temp: Math.round(weatherData.current.temperature_2m),
                 code: weatherData.current.weather_code,
+                isDay: weatherData.current.is_day,
                 location: `${city}, ${country}`,
                 loading: false
             });
@@ -161,16 +164,28 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
     { label: 'Profile', icon: User, page: 'dashboard' }
   ];
 
-  const getWeatherIcon = (code: number) => {
-      // WMO Weather interpretation codes (WW)
-      if (code === 0 || code === 1) return <Sun size={64} className="weather-icon-anim mb-2 text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.6)]" />;
-      if (code === 2) return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-200 drop-shadow-md" />;
-      if (code === 3) return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-400 drop-shadow-md" />;
+  const getWeatherIcon = (code: number, isDay: number) => {
+      // Prioritize distinct conditions (Rain/Snow/Thunder)
       if ([45, 48].includes(code)) return <Wind size={64} className="weather-icon-anim mb-2 text-slate-300 drop-shadow-md" />;
       if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return <CloudRain size={64} className="weather-icon-anim mb-2 text-blue-300 drop-shadow-[0_0_15px_rgba(147,197,253,0.5)]" />;
       if ([71, 73, 75, 77, 85, 86].includes(code)) return <Snowflake size={64} className="weather-icon-anim mb-2 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" />;
       if ([95, 96, 99].includes(code)) return <CloudLightning size={64} className="weather-icon-anim mb-2 text-purple-300 drop-shadow-[0_0_15px_rgba(216,180,254,0.6)]" />;
-      return <CloudDrizzle size={64} className="weather-icon-anim mb-2 text-sky-200" />;
+      if ([56, 57, 66, 67].includes(code)) return <CloudDrizzle size={64} className="weather-icon-anim mb-2 text-sky-200" />;
+
+      // For Clear/Cloudy, check Day vs Night
+      if (isDay === 0) {
+        // Night Time Icons
+        if (code === 0 || code === 1) return <Moon size={64} className="weather-icon-anim mb-2 text-slate-200 drop-shadow-[0_0_15px_rgba(226,232,240,0.6)]" />;
+        if (code === 2 || code === 3) return <CloudMoon size={64} className="weather-icon-anim mb-2 text-slate-300 drop-shadow-md" />;
+      } else {
+        // Day Time Icons
+        if (code === 0 || code === 1) return <Sun size={64} className="weather-icon-anim mb-2 text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.6)]" />;
+        if (code === 2) return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-100 drop-shadow-md" />;
+        if (code === 3) return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-300 drop-shadow-md" />;
+      }
+      
+      // Fallback
+      return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-200 drop-shadow-md" />;
   };
 
   const getWeatherDescription = (code: number) => {
@@ -224,9 +239,24 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
       {/* Main Content */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6 z-10">
         <div className="lg:col-span-2 space-y-6">
-          <div className="dash-welcome w-full bg-gradient-to-br from-sky-500 to-sky-700 rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl shadow-sky-900/20 relative overflow-hidden group min-h-[320px] flex flex-col justify-between transition-all duration-500 hover:shadow-sky-500/30">
+          <div className={`dash-welcome w-full rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[320px] flex flex-col justify-between transition-all duration-500 hover:shadow-sky-500/30 ${
+            weather.isDay === 0 
+              ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900 shadow-slate-900/30' 
+              : 'bg-gradient-to-br from-sky-500 to-sky-700 shadow-sky-900/20'
+          }`}>
             {/* Ambient Background Animation */}
-            <div className="floating-blob absolute top-[-50%] right-[-10%] w-[450px] h-[450px] bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-colors duration-700"></div>
+            <div className={`floating-blob absolute top-[-50%] right-[-10%] w-[450px] h-[450px] rounded-full blur-3xl transition-colors duration-700 ${
+              weather.isDay === 0 ? 'bg-indigo-500/20 group-hover:bg-indigo-400/30' : 'bg-white/10 group-hover:bg-white/20'
+            }`}></div>
+            
+            {/* Additional Night Stars if Night */}
+            {weather.isDay === 0 && (
+               <div className="absolute inset-0 opacity-40">
+                  <div className="absolute top-10 left-20 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                  <div className="absolute top-20 right-40 w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                  <div className="absolute bottom-32 left-10 w-1 h-1 bg-white rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+               </div>
+            )}
 
             <div className="relative z-10 flex justify-between items-start">
               <div>
@@ -236,14 +266,18 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                     {weather.loading ? "Locating..." : weather.location}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight">Namaste, Alex!</h1>
+                <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight">
+                    {weather.isDay === 0 ? "Good Evening," : "Namaste,"} Alex!
+                </h1>
                 <p className="text-sky-100 max-w-md text-lg font-medium leading-relaxed opacity-90 pr-2">
                     {weather.loading ? (
                         <span className="animate-pulse">Checking local weather conditions...</span>
                     ) : (
                         <>
-                           It's {getWeatherDescription(weather.code).toLowerCase()} today. 
-                           {weather.code < 3 ? " Perfect for outdoor exploration." : " Maybe check out some indoor museums."}
+                           It's {getWeatherDescription(weather.code).toLowerCase()} {weather.isDay === 0 ? "tonight" : "today"}. 
+                           {weather.code < 3 
+                              ? (weather.isDay === 0 ? " Enjoy the clear night sky." : " Perfect for outdoor exploration.") 
+                              : " Maybe check out some indoor museums."}
                         </>
                     )}
                 </p>
@@ -256,7 +290,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                      </div>
                  ) : (
                      <div className="transform scale-75 origin-top-right md:scale-100 transition-transform">
-                        {getWeatherIcon(weather.code)}
+                        {getWeatherIcon(weather.code, weather.isDay)}
                         <div className="text-5xl font-grotesk font-bold tracking-tighter">{weather.temp}°</div>
                      </div>
                  )}
@@ -268,7 +302,9 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                   <div className="p-3 bg-yellow-400 rounded-xl text-yellow-900 shadow-md shrink-0 group-hover/suggestion:scale-110 transition-transform duration-300"><Compass size={24} /></div>
                   <div className="flex-grow">
                     <div className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider text-sky-100 mb-1">AI Suggestion</div>
-                    <div className="text-base text-white font-bold leading-tight">High visibility today. Check out the Nagarkot View Tower.</div>
+                    <div className="text-base text-white font-bold leading-tight">
+                        {weather.isDay === 0 ? "Explore the vibrant nightlife in Thamel." : "High visibility today. Check out the Nagarkot View Tower."}
+                    </div>
                   </div>
                   <div className="bg-white/20 p-2 rounded-full group-hover/suggestion:translate-x-1 transition-transform">
                      <ArrowRight size={20} className="text-white" />
@@ -344,19 +380,21 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
       </div>
       
       {/* Bottom Nav (Mobile Only) */}
-      <div className="dash-nav-mobile md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl border border-white/50 px-8 py-4 rounded-full shadow-2xl z-40 flex items-center gap-8 ring-1 ring-slate-100">
-        {navItems.map((item, i) => (
-          <button 
-            key={item.label} 
-            onClick={() => onNavigate(item.page)}
-            className={`flex flex-col items-center gap-1 transition-all duration-300 relative group ${i === 0 ? 'text-sky-600 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            <div className={`transition-transform duration-300 ${i === 0 ? '-translate-y-1' : 'group-hover:-translate-y-2'}`}>
-                <item.icon size={24} className={i === 0 ? 'fill-sky-100' : ''} />
-            </div>
-            {i === 0 && <div className="absolute -bottom-2 w-1.5 h-1.5 bg-sky-600 rounded-full shadow-lg shadow-sky-400/50"></div>}
-          </button>
-        ))}
+      <div className="dash-nav-mobile md:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-tr from-sky-600 via-blue-600 to-sky-700 backdrop-blur-xl border border-white/20 py-4 px-8 rounded-2xl shadow-xl shadow-sky-900/20 z-50 flex items-center justify-between ring-1 ring-white/20">
+        {navItems.map((item, i) => {
+           // For DashboardPage, highlight index 0 (Explore) by default
+           const isActive = i === 0;
+           return (
+            <button 
+                key={item.label} 
+                onClick={() => onNavigate(item.page)}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 relative p-2 rounded-xl ${isActive ? 'text-white scale-110' : 'text-sky-200 hover:text-white hover:bg-white/10'}`}
+            >
+                <item.icon size={24} className={`transition-all duration-300 ${isActive ? 'fill-white drop-shadow-md' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+                {isActive && <span className="absolute -bottom-2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>}
+            </button>
+           );
+        })}
       </div>
     </div>
   );

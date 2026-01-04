@@ -60,38 +60,43 @@ export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Text color logic based on scroll state
+  const textColor = scrolled ? 'text-sky-100 hover:text-white' : 'text-slate-600 hover:text-sky-600';
+  const logoText = scrolled ? 'text-white' : 'text-sky-900';
+  const logoBg = scrolled ? 'bg-white text-sky-600' : 'bg-sky-600 text-white';
+
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-gradient-to-r from-sky-600 via-sky-600 to-blue-600 shadow-lg py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('landing')}>
-          <div className="bg-sky-600 p-2 rounded-lg text-white">
+        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onNavigate('landing')}>
+          <div className={`${logoBg} p-2 rounded-lg shadow-sm transition-colors duration-300`}>
             <Plane size={20} className="-rotate-45" />
           </div>
-          <span className="font-display font-bold text-xl text-sky-900 tracking-tight">ExploreMate</span>
+          <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${logoText}`}>ExploreMate</span>
         </div>
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => onNavigate('landing')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Home</button>
-          <button onClick={() => onNavigate('about')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">About</button>
-          <button onClick={() => onNavigate('features')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Features</button>
-          <button onClick={() => onNavigate('blog')} className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">Blog</button>
-          <button className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors flex items-center gap-2">
+          <button onClick={() => onNavigate('landing')} className={`text-sm font-semibold transition-colors ${textColor}`}>Home</button>
+          <button onClick={() => onNavigate('about')} className={`text-sm font-semibold transition-colors ${textColor}`}>About</button>
+          <button onClick={() => onNavigate('features')} className={`text-sm font-semibold transition-colors ${textColor}`}>Features</button>
+          <button onClick={() => onNavigate('blog')} className={`text-sm font-semibold transition-colors ${textColor}`}>Blog</button>
+          <button className={`text-sm font-semibold transition-colors flex items-center gap-2 ${textColor}`}>
              <Smartphone size={16} /> Download App
           </button>
         </div>
 
         <div className="hidden md:flex items-center gap-4">
           {isLoggedIn ? (
-             <button onClick={() => onNavigate('dashboard')} className="px-5 py-2.5 bg-sky-900 text-white rounded-full text-sm font-bold hover:bg-sky-800 transition-colors shadow-lg shadow-sky-900/20">
+             <button onClick={() => onNavigate('dashboard')} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg ${scrolled ? 'bg-white text-sky-700 hover:bg-sky-50' : 'bg-sky-900 text-white hover:bg-sky-800'}`}>
                Dashboard
              </button>
           ) : (
             <>
-              <button onClick={() => onNavigate('login')} className="text-sm font-bold text-slate-700 hover:text-sky-600 transition-colors">
+              <button onClick={() => onNavigate('login')} className={`text-sm font-bold transition-colors ${scrolled ? 'text-white hover:text-sky-200' : 'text-slate-700 hover:text-sky-600'}`}>
                 Log In
               </button>
-              <button onClick={() => onNavigate('signup')} className="px-5 py-2.5 bg-sky-900 text-white rounded-full text-sm font-bold hover:bg-sky-800 transition-colors shadow-lg shadow-sky-900/20">
+              <button onClick={() => onNavigate('signup')} className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all shadow-lg ${scrolled ? 'bg-white text-sky-700 hover:bg-sky-50' : 'bg-sky-900 text-white hover:bg-sky-800'}`}>
                 Sign Up
               </button>
             </>
@@ -99,7 +104,7 @@ export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: 
         </div>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-slate-700" onClick={() => setIsOpen(!isOpen)}>
+        <button className={`md:hidden ${scrolled ? 'text-white' : 'text-slate-700'}`} onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X /> : <Menu />}
         </button>
       </div>

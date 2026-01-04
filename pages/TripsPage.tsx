@@ -292,19 +292,20 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
       </div>
       
       {/* Bottom Nav (Mobile Only) */}
-      <div className="dash-nav-mobile md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl border border-white/50 px-8 py-4 rounded-full shadow-2xl z-40 flex items-center gap-8 ring-1 ring-slate-100">
-        {navItems.map((item, i) => (
-          <button 
-            key={item.label} 
-            onClick={() => onNavigate(item.page)}
-            className={`flex flex-col items-center gap-1 transition-all duration-300 relative group ${item.page === 'trips' ? 'text-sky-600 scale-110' : 'text-slate-400 hover:text-slate-600'}`}
-          >
-            <div className={`transition-transform duration-300 ${item.page === 'trips' ? '-translate-y-1' : 'group-hover:-translate-y-2'}`}>
-                <item.icon size={24} className={item.page === 'trips' ? 'fill-sky-100' : ''} />
-            </div>
-            {item.page === 'trips' && <div className="absolute -bottom-2 w-1.5 h-1.5 bg-sky-600 rounded-full shadow-lg shadow-sky-400/50"></div>}
-          </button>
-        ))}
+      <div className="dash-nav-mobile md:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-tr from-sky-600 via-blue-600 to-sky-700 backdrop-blur-xl border border-white/20 py-4 px-8 rounded-2xl shadow-xl shadow-sky-900/20 z-50 flex items-center justify-between ring-1 ring-white/20">
+        {navItems.map((item, i) => {
+           const isActive = item.page === 'trips';
+           return (
+            <button 
+                key={item.label} 
+                onClick={() => onNavigate(item.page)}
+                className={`flex flex-col items-center gap-1 transition-all duration-300 relative p-2 rounded-xl ${isActive ? 'text-white scale-110' : 'text-sky-200 hover:text-white hover:bg-white/10'}`}
+            >
+                <item.icon size={24} className={`transition-all duration-300 ${isActive ? 'fill-white drop-shadow-md' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+                {isActive && <span className="absolute -bottom-2 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>}
+            </button>
+           );
+        })}
       </div>
     </div>
   );
