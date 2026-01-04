@@ -181,7 +181,7 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
     <div ref={containerRef} className="relative w-full min-h-screen p-4 pb-24 md:p-8 flex flex-col items-center bg-slate-50/50">
       
       {/* Dashboard Header */}
-      <div className="dash-header w-full max-w-6xl flex items-center justify-between mb-8 z-20">
+      <div className="dash-header w-full max-w-6xl flex items-center justify-between mb-8 z-20 relative">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('landing')}>
           <div className="bg-sky-600 p-2 rounded-lg text-white shadow-lg shadow-sky-600/20 group-hover:scale-110 transition-transform duration-300">
             <Plane size={24} className="-rotate-45" />
@@ -208,8 +208,12 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="p-2.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-slate-600 hover:text-sky-600 relative border border-slate-100 shadow-sm hover:shadow-md">
+          <button 
+             onClick={() => onNavigate('notifications')}
+             className="p-2.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-slate-600 hover:text-sky-600 relative border border-slate-100 shadow-sm hover:shadow-md"
+          >
             <Bell size={20} />
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
           </button>
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out

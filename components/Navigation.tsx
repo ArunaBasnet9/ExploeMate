@@ -22,7 +22,7 @@ export const Footer = ({ onNavigate }: { onNavigate: (page: string) => void }) =
         </div>
         
         {[
-          { title: "Company", links: [{label: "About Us", page: "about"}, {label: "Features", page: "features"}, {label: "Blog", page: "blog"}] },
+          { title: "Company", links: [{label: "About Us", page: "about"}, {label: "Features", page: "features"}, {label: "News & Weather", page: "news"}] },
           { title: "Features", links: [{label: "AI Planner", page: "features"}, {label: "Route Optimizer", page: "features"}] },
           { title: "Support", links: [{label: "Help Center", page: "faq"}, {label: "FAQ", page: "faq"}, {label: "Contact", page: "about"}] }
         ].map((col, i) => (
@@ -80,7 +80,7 @@ export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: 
           <button onClick={() => onNavigate('landing')} className={`text-sm font-semibold transition-colors ${textColor}`}>Home</button>
           <button onClick={() => onNavigate('about')} className={`text-sm font-semibold transition-colors ${textColor}`}>About</button>
           <button onClick={() => onNavigate('features')} className={`text-sm font-semibold transition-colors ${textColor}`}>Features</button>
-          <button onClick={() => onNavigate('blog')} className={`text-sm font-semibold transition-colors ${textColor}`}>Blog</button>
+          <button onClick={() => onNavigate('news')} className={`text-sm font-semibold transition-colors ${textColor}`}>News</button>
           <button className={`text-sm font-semibold transition-colors flex items-center gap-2 ${textColor}`}>
              <Smartphone size={16} /> Download App
           </button>
@@ -115,7 +115,7 @@ export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: 
           <button onClick={() => { onNavigate('landing'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Home</button>
           <button onClick={() => { onNavigate('about'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">About</button>
           <button onClick={() => { onNavigate('features'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Features</button>
-          <button onClick={() => { onNavigate('blog'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">Blog</button>
+          <button onClick={() => { onNavigate('news'); setIsOpen(false); }} className="text-left text-sm font-semibold text-slate-600 py-2">News & Weather</button>
           <button className="text-left text-sm font-semibold text-slate-600 py-2 flex items-center gap-2">
              <Smartphone size={16} /> Download App
           </button>

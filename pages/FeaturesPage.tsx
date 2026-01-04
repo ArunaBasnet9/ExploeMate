@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Bot, Map, Languages, QrCode, CloudRain, Sun, Users, ArrowRight, Zap, CheckCircle2, MessageCircle, Navigation, Globe, ShieldCheck, Sparkles, Smartphone, Clock } from 'lucide-react';
 import { Navbar, Footer } from '../components/Navigation';
+import LeafletMap from '../components/LeafletMap';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -32,7 +33,7 @@ const FeatureSection = ({ title, subTitle, description, icon: Icon, align = 'lef
     
     <div className="w-full md:w-1/2 feature-visual relative group">
       <div className="absolute inset-0 bg-gradient-to-tr from-sky-200 to-purple-200 rounded-[2.5rem] rotate-3 opacity-50 group-hover:rotate-6 transition-transform duration-500"></div>
-      <div className="relative bg-white/80 backdrop-blur-xl border border-white p-8 rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[400px] flex items-center justify-center">
+      <div className="relative bg-white/80 backdrop-blur-xl border border-white p-2 rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[400px] flex items-center justify-center">
         {visual}
       </div>
     </div>
@@ -163,7 +164,7 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
                 "Adaptability: Suggestions for Nature, Culture, Food, or Adventure"
               ]}
               visual={
-                <div className="w-full max-w-xs space-y-4">
+                <div className="w-full max-w-xs space-y-4 p-4">
                   {/* Input Simulation */}
                   <div className="flex gap-2 mb-6">
                     <div className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-500 font-grotesk">2 Days</div>
@@ -196,48 +197,31 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
               }
             />
 
-            {/* 2. Route Optimization (Google Maps) */}
+            {/* 2. Route Optimization (OpenStreetMap) */}
             <FeatureSection 
-              subTitle="Google Maps API Integration"
-              title="Location & Route Optimization"
-              description="We integrate directly with Google Directions, Distance Matrix, and Places APIs to ensure you take the smartest path."
+              subTitle="OpenStreetMap Integration"
+              title="Detailed Open-Source Mapping"
+              description="Powered by OpenStreetMap and Leaflet, we provide free, unrestricted access to the most detailed map data available. No hidden costs, just pure navigation."
               icon={Map}
               align="right"
               listItems={[
-                "Real-time travel time calculation between spots",
-                "Automatic opening/closing hour verification",
-                "Most efficient route generation to save time"
+                "Full access to OpenStreetMap raw data",
+                "Detailed footpaths, cycleways, and hidden trails",
+                "Community-updated maps ensuring 100% free accuracy"
               ]}
               visual={
-                <div className="w-full max-w-sm relative">
-                  <div className="absolute top-1/2 left-8 bottom-8 w-1 bg-slate-200 -z-10"></div>
-                  
-                  <div className="flex items-center gap-4 mb-8">
-                     <div className="w-16 h-16 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center text-green-500">
-                        <Navigation size={32} />
-                     </div>
-                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase font-grotesk">Start</div>
-                        <div className="font-bold text-slate-800 font-grotesk">Current Location</div>
-                     </div>
-                  </div>
-
-                  <div className="ml-8 mb-8 pl-8 border-l-2 border-dashed border-sky-300 relative">
-                     <div className="absolute top-1/2 -left-3 -translate-y-1/2 bg-sky-500 text-white text-[10px] font-bold px-2 py-1 rounded-full font-grotesk">
-                        15 min drive
-                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                     <div className="w-16 h-16 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center justify-center text-red-500 relative">
-                        <Map size={32} />
-                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white font-grotesk">OPEN</div>
-                     </div>
-                     <div>
-                        <div className="text-xs font-bold text-slate-400 uppercase font-grotesk">Destination</div>
-                        <div className="font-bold text-slate-800 font-grotesk">Pashupatinath Temple</div>
-                     </div>
-                  </div>
+                <div className="w-full h-full min-h-[400px]">
+                   <LeafletMap className="w-full h-full rounded-[2rem] z-0" />
+                   
+                   <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md p-3 rounded-xl border border-white/50 shadow-lg flex items-center gap-3 z-10">
+                      <div className="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white shrink-0">
+                         <Navigation size={20} />
+                      </div>
+                      <div>
+                         <div className="text-xs font-bold text-slate-400 uppercase">Routing Engine</div>
+                         <div className="font-bold text-slate-800 text-sm">Optimized via OSRM (Open Source)</div>
+                      </div>
+                   </div>
                 </div>
               }
             />
@@ -254,7 +238,7 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
                 "\"Where is the nearest vegetarian restaurant?\""
               ]}
               visual={
-                <div className="w-full max-w-xs space-y-4">
+                <div className="w-full max-w-xs space-y-4 p-4">
                    <div className="flex justify-end">
                       <div className="bg-sky-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm text-sm font-medium shadow-md max-w-[85%] font-sans">
                         What can I do in Kathmandu this evening?
@@ -290,7 +274,7 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
                 "Foggy 🌫️ → Avoids high-altitude viewpoints for safety"
               ]}
               visual={
-                <div className="w-full max-w-sm">
+                <div className="w-full max-w-sm p-4">
                    <div className="bg-white rounded-3xl p-6 shadow-xl border border-slate-100 relative overflow-hidden">
                       <div className="flex justify-between items-center mb-6">
                          <div>

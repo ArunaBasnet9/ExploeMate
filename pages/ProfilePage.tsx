@@ -111,8 +111,12 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="p-2.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-slate-600 hover:text-sky-600 relative border border-slate-100 shadow-sm hover:shadow-md">
+          <button 
+            onClick={() => onNavigate('notifications')}
+            className="p-2.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-slate-600 hover:text-sky-600 relative border border-slate-100 shadow-sm hover:shadow-md"
+          >
             <Bell size={20} />
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
           </button>
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out
@@ -170,11 +174,11 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
               <div className="grid grid-cols-3 gap-4 border-t border-slate-100 pt-6">
                  <div className="text-center">
                     <div className="text-2xl font-bold text-slate-900 font-display">12</div>
-                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Countries</div>
+                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Districts</div>
                  </div>
                  <div className="text-center border-l border-slate-100">
-                    <div className="text-2xl font-bold text-slate-900 font-display">48</div>
-                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Cities</div>
+                    <div className="text-2xl font-bold text-slate-900 font-display">8</div>
+                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Treks</div>
                  </div>
                  <div className="text-center border-l border-slate-100">
                     <div className="text-2xl font-bold text-slate-900 font-display">156</div>

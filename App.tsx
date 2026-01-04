@@ -4,7 +4,7 @@ import { Plane, MapPin } from 'lucide-react';
 import { GlobalAestheticBackground } from './components/SharedUI';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
-import BlogPage from './pages/BlogPage';
+import NewsPage from './pages/NewsPage';
 import FAQPage from './pages/FAQPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
@@ -13,6 +13,8 @@ import FeaturesPage from './pages/FeaturesPage';
 import SavedPage from './pages/SavedPage';
 import TripsPage from './pages/TripsPage';
 import ProfilePage from './pages/ProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
+import RouteOptimizerPage from './pages/RouteOptimizerPage';
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,7 +151,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'blog' | 'features' | 'saved' | 'trips' | 'profile'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleNavigate = (page: string) => {
@@ -187,12 +189,16 @@ export default function App() {
         return <TripsPage onLogout={handleLogout} onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'profile':
         return <ProfilePage onLogout={handleLogout} onNavigate={handleNavigate} />;
+      case 'notifications':
+        return <NotificationsPage onNavigate={handleNavigate} />;
+      case 'route-optimizer':
+        return <RouteOptimizerPage onNavigate={handleNavigate} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'faq':
         return <FAQPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
-      case 'blog':
-        return <BlogPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
+      case 'news':
+        return <NewsPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'features':
         return <FeaturesPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       default:

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Moon, CloudMoon, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle } from 'lucide-react';
+import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Moon, CloudMoon, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, Droplets, Eye, Thermometer } from 'lucide-react';
 
 interface WeatherData {
   temp: number;
@@ -8,63 +8,91 @@ interface WeatherData {
   isDay: number; // 1 = Day, 0 = Night
   location: string;
   loading: boolean;
+  humidity: number;
+  windSpeed: number;
+  visibility: number;
+  feelsLike: number;
 }
 
 const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigate: (page: string) => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  
   const [weather, setWeather] = useState<WeatherData>({
     temp: 24,
     code: 0,
     isDay: 1, 
-    location: 'Kathmandu, Nepal', // Default fallback
-    loading: true
+    location: 'Locating...', // Initial state
+    loading: true,
+    humidity: 0,
+    windSpeed: 0,
+    visibility: 10000,
+    feelsLike: 0
   });
   
   useEffect(() => {
-    // Weather & Location Fetching
-    const fetchWeather = async (lat: number, lon: number) => {
-        try {
-            // 1. Get Weather Code, Temp & Is_Day
-            const weatherRes = await fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&temperature_unit=celsius`
-            );
-            const weatherData = await weatherRes.json();
-            
-            // 2. Get Location Name (Reverse Geocoding)
-            const geoRes = await fetch(
-                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
-            );
-            const geoData = await geoRes.json();
-            
-            const city = geoData.city || geoData.locality || geoData.principalSubdivision || "Unknown Location";
-            const country = geoData.countryName || "";
+    // Weather & Location Fetching Function
+    const updateWeather = () => {
+        const fetchWeatherData = async (lat: number, lon: number) => {
+            try {
+                // 1. Get Weather Code, Temp, Is_Day, Humidity, Wind, Visibility, Apparent Temp
+                const weatherRes = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,visibility,apparent_temperature&temperature_unit=celsius`
+                );
+                const weatherData = await weatherRes.json();
+                
+                // 2. Get Location Name (Reverse Geocoding)
+                const geoRes = await fetch(
+                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+                );
+                const geoData = await geoRes.json();
+                
+                const city = geoData.city || geoData.locality || geoData.principalSubdivision || "Unknown Location";
+                const country = geoData.countryName || "";
 
-            setWeather({
-                temp: Math.round(weatherData.current.temperature_2m),
-                code: weatherData.current.weather_code,
-                isDay: weatherData.current.is_day,
-                location: `${city}, ${country}`,
-                loading: false
-            });
-        } catch (error) {
-            console.error("Failed to fetch weather data", error);
-            setWeather(prev => ({ ...prev, loading: false }));
+                setWeather({
+                    temp: Math.round(weatherData.current.temperature_2m),
+                    code: weatherData.current.weather_code,
+                    isDay: weatherData.current.is_day,
+                    location: `${city}, ${country}`,
+                    loading: false,
+                    humidity: weatherData.current.relative_humidity_2m,
+                    windSpeed: weatherData.current.wind_speed_10m,
+                    visibility: weatherData.current.visibility,
+                    feelsLike: Math.round(weatherData.current.apparent_temperature)
+                });
+            } catch (error) {
+                console.error("Failed to fetch weather data", error);
+                setWeather(prev => ({ ...prev, loading: false, location: "Weather Unavailable" }));
+            }
+        };
+
+        // Get User Location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Success: Use User's Location
+                    fetchWeatherData(position.coords.latitude, position.coords.longitude);
+                },
+                (error) => {
+                    console.warn("Geolocation access denied or failed, defaulting to Kathmandu.", error);
+                    // Error/Denied: Fallback to Kathmandu
+                    fetchWeatherData(27.7172, 85.3240);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            // Not Supported: Fallback to Kathmandu
+            fetchWeatherData(27.7172, 85.3240);
         }
     };
 
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                fetchWeather(position.coords.latitude, position.coords.longitude);
-            },
-            (error) => {
-                console.warn("Geolocation denied or unavailable, using default.", error);
-                setWeather(prev => ({ ...prev, loading: false }));
-            }
-        );
-    } else {
-        setWeather(prev => ({ ...prev, loading: false }));
-    }
+    // Initial call
+    updateWeather();
+
+    // Update every 60 seconds to keep weather and location fresh
+    const intervalId = setInterval(updateWeather, 60000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -166,7 +194,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   };
 
   const tools = [
-    { icon: <MapPin className="text-white" size={20} />, label: "Route Optimizer", color: "bg-emerald-500", shadow: "shadow-emerald-500/30" },
+    { icon: <MapPin className="text-white" size={20} />, label: "Route Optimizer", color: "bg-emerald-500", shadow: "shadow-emerald-500/30", action: () => onNavigate('route-optimizer') },
     { icon: <Languages className="text-white" size={20} />, label: "Translator", color: "bg-blue-500", shadow: "shadow-blue-500/30" },
     { icon: <QrCode className="text-white" size={20} />, label: "QR Guide", color: "bg-purple-500", shadow: "shadow-purple-500/30" },
     { icon: <Users className="text-white" size={20} />, label: "Group Plan", color: "bg-orange-500", shadow: "shadow-orange-500/30" },
@@ -215,7 +243,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   return (
     <div ref={containerRef} className="relative w-full min-h-screen p-4 pb-24 md:p-8 flex flex-col items-center bg-slate-50/50">
       {/* Navbar (Header + Desktop Nav) */}
-      <div className="dash-header w-full max-w-6xl flex items-center justify-between mb-8 z-20">
+      <div className="dash-header w-full max-w-6xl flex items-center justify-between mb-8 z-20 relative">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('landing')}>
           <div className="bg-sky-600 p-2 rounded-lg text-white shadow-lg shadow-sky-600/20 group-hover:scale-110 transition-transform duration-300">
             <Plane size={24} className="-rotate-45" />
@@ -237,11 +265,15 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
-          <button className="p-2.5 rounded-full bg-white hover:bg-sky-50 transition-colors text-slate-600 hover:text-sky-600 relative border border-slate-100 shadow-sm hover:shadow-md">
+        <div className="flex items-center gap-4 relative">
+          <button 
+            onClick={() => onNavigate('notifications')}
+            className="p-2.5 rounded-full bg-white transition-colors relative border border-slate-100 shadow-sm hover:shadow-md text-slate-600 hover:text-sky-600"
+          >
             <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse"></span>
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
           </button>
+
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out
           </button>
@@ -254,7 +286,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
       {/* Main Content */}
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6 z-10">
         <div className="lg:col-span-2 space-y-6">
-          <div className={`dash-welcome w-full rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[320px] flex flex-col justify-between transition-all duration-500 hover:shadow-sky-500/30 ${
+          <div className={`dash-welcome w-full rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group min-h-[420px] flex flex-col justify-between transition-all duration-500 hover:shadow-sky-500/30 ${
             weather.isDay === 0 
               ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-sky-900 shadow-slate-900/30' 
               : 'bg-gradient-to-br from-sky-500 to-sky-700 shadow-sky-900/20'
@@ -312,7 +344,35 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
               </div>
             </div>
 
-            <div className="mt-8 p-1 rounded-2xl bg-gradient-to-r from-white/20 to-white/5 backdrop-blur-md border border-white/20 hover:border-white/40 transition-colors cursor-pointer group/suggestion shadow-lg">
+            {/* Weather Metrics Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 relative z-10">
+               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col justify-center">
+                   <div className="flex items-center gap-1.5 text-sky-100 mb-1">
+                      <Droplets size={14} className="opacity-80" /> <span className="text-xs font-bold uppercase tracking-wide opacity-80">Humidity</span>
+                   </div>
+                   <div className="text-xl font-bold font-grotesk">{weather.humidity}%</div>
+               </div>
+               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col justify-center">
+                   <div className="flex items-center gap-1.5 text-sky-100 mb-1">
+                      <Wind size={14} className="opacity-80" /> <span className="text-xs font-bold uppercase tracking-wide opacity-80">Wind</span>
+                   </div>
+                   <div className="text-xl font-bold font-grotesk">{weather.windSpeed} km/h</div>
+               </div>
+               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col justify-center">
+                   <div className="flex items-center gap-1.5 text-sky-100 mb-1">
+                      <Eye size={14} className="opacity-80" /> <span className="text-xs font-bold uppercase tracking-wide opacity-80">Visibility</span>
+                   </div>
+                   <div className="text-xl font-bold font-grotesk">{(weather.visibility / 1000).toFixed(1)} km</div>
+               </div>
+               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col justify-center">
+                   <div className="flex items-center gap-1.5 text-sky-100 mb-1">
+                      <Thermometer size={14} className="opacity-80" /> <span className="text-xs font-bold uppercase tracking-wide opacity-80">Feels Like</span>
+                   </div>
+                   <div className="text-xl font-bold font-grotesk">{weather.feelsLike}°</div>
+               </div>
+            </div>
+
+            <div className="mt-6 p-1 rounded-2xl bg-gradient-to-r from-white/20 to-white/5 backdrop-blur-md border border-white/20 hover:border-white/40 transition-colors cursor-pointer group/suggestion shadow-lg relative z-10">
                <div className="bg-black/5 rounded-[13px] p-4 flex items-center gap-4 hover:bg-black/10 transition-colors">
                   <div className="p-3 bg-yellow-400 rounded-xl text-yellow-900 shadow-md shrink-0 group-hover/suggestion:scale-110 transition-transform duration-300"><Compass size={24} /></div>
                   <div className="flex-grow">
@@ -356,6 +416,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                 className="dash-tool bg-white/80 backdrop-blur-xl p-6 rounded-[2rem] flex flex-col items-center justify-center gap-4 border border-white/60 transition-all duration-300"
                 onMouseEnter={(e) => onToolHover(e, true)}
                 onMouseLeave={(e) => onToolHover(e, false)}
+                onClick={tool.action}
                >
                  <div className={`tool-icon-box ${tool.color} p-4 rounded-2xl shadow-lg ${tool.shadow} text-white transition-transform duration-300`}>
                     {tool.icon}
