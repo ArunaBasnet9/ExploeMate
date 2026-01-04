@@ -49,7 +49,7 @@ const TRIPS = [
   }
 ];
 
-const TripCard = ({ trip }: { trip: typeof TRIPS[0] }) => {
+const TripCard: React.FC<{ trip: typeof TRIPS[number] }> = ({ trip }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const onHover = (enter: boolean) => {
@@ -161,9 +161,16 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         { y: -30, opacity: 0 }, 
         { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
     );
+    
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out', delay: 0.2 }
+    );
+
     tl.fromTo('.trips-header-anim',
         { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.2 }
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.3 }
     );
     tl.fromTo('.dash-nav-mobile',
         { y: 60, opacity: 0 },
@@ -181,11 +188,19 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
       }
   }, [activeTab]);
 
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
+
   const navItems = [
     { label: 'Explore', icon: Compass, page: 'dashboard' },
     { label: 'Saved', icon: Mountain, page: 'saved' },
     { label: 'Trips', icon: Calendar, page: 'trips' },
-    { label: 'Profile', icon: User, page: 'dashboard' }
+    { label: 'Profile', icon: User, page: 'profile' }
   ];
 
   return (
@@ -225,7 +240,7 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out
           </button>
-          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300">
+          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300" onClick={() => onNavigate('profile')}>
              <img src="https://i.pravatar.cc/150?img=32" alt="Profile" className="w-full h-full rounded-full border-2 border-white object-cover" />
           </div>
         </div>
@@ -238,8 +253,8 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                 <div className="trips-header-anim inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider shadow-sm mb-4">
                     <Plane size={14} className="text-sky-500" /> Travel Log
                 </div>
-                <h1 className="trips-header-anim text-4xl md:text-6xl font-display font-bold text-slate-900 mb-2 tracking-tight">
-                    My Adventures
+                <h1 className="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-2 tracking-tight overflow-hidden">
+                    {splitText("My Adventures")}
                 </h1>
                 <p className="trips-header-anim text-slate-500 text-lg">
                     Manage your itineraries and look back on past journeys.

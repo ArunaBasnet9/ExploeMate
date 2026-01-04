@@ -84,28 +84,35 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
           "-=0.6"
       );
 
-      // 3. Search Bar slide in
+      // 3. Modern Text Reveal for Welcome Message
+      tl.fromTo('.reveal-text-char', 
+          { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+          { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.03, duration: 1, ease: 'power4.out' },
+          "-=0.5"
+      );
+
+      // 4. Search Bar slide in
       tl.fromTo('.dash-search',
           { opacity: 0, x: -30 },
           { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' },
           "-=0.8"
       );
 
-      // 4. Tools Grid (Staggered with back bounce)
+      // 5. Tools Grid (Staggered with back bounce)
       tl.fromTo('.dash-tool',
           { scale: 0.5, opacity: 0, y: 30 },
           { scale: 1, opacity: 1, y: 0, stagger: 0.08, duration: 0.6, ease: 'back.out(2)' },
           "-=0.4"
       );
 
-      // 5. Recommendations List (Staggered slide)
+      // 6. Recommendations List (Staggered slide)
       tl.fromTo('.dash-rec',
           { x: 30, opacity: 0 },
           { x: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: 'power2.out' },
           "-=0.2"
       );
 
-      // 6. Bottom Nav (Mobile Only)
+      // 7. Bottom Nav (Mobile Only)
       tl.fromTo('.dash-nav-mobile',
           { y: 60, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
@@ -134,6 +141,14 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
     return () => ctx.revert();
   }, []);
 
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
+
   const onToolHover = (e: React.MouseEvent<HTMLButtonElement>, enter: boolean) => {
       const target = e.currentTarget;
       const iconBox = target.querySelector('.tool-icon-box');
@@ -161,7 +176,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
     { label: 'Explore', icon: Compass, page: 'dashboard' },
     { label: 'Saved', icon: Mountain, page: 'saved' },
     { label: 'Trips', icon: Calendar, page: 'trips' },
-    { label: 'Profile', icon: User, page: 'dashboard' }
+    { label: 'Profile', icon: User, page: 'profile' }
   ];
 
   const getWeatherIcon = (code: number, isDay: number) => {
@@ -230,7 +245,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out
           </button>
-          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300">
+          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300" onClick={() => onNavigate('profile')}>
              <img src="https://i.pravatar.cc/150?img=32" alt="Profile" className="w-full h-full rounded-full border-2 border-white object-cover" />
           </div>
         </div>
@@ -266,8 +281,8 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                     {weather.loading ? "Locating..." : weather.location}
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight">
-                    {weather.isDay === 0 ? "Good Evening," : "Namaste,"} Alex!
+                <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight overflow-hidden">
+                    {splitText(weather.isDay === 0 ? "Good Evening, Rashoj!" : "Namaste, Rashoj!")}
                 </h1>
                 <p className="text-sky-100 max-w-md text-lg font-medium leading-relaxed opacity-90 pr-2">
                     {weather.loading ? (

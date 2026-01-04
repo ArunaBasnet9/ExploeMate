@@ -34,6 +34,14 @@ const BlogCard = ({ image, category, title, excerpt, date, readTime }: any) => (
 
 const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
+    const tl = gsap.timeline();
+
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' }
+    );
+
     gsap.utils.toArray('.blog-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
         { y: 50, opacity: 0 },
@@ -52,6 +60,14 @@ const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
       }
     );
   }, []);
+
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
 
   const posts = [
     {
@@ -115,9 +131,9 @@ const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-sky-700 font-bold text-xs uppercase tracking-wider border border-sky-200 mb-6">
                   <BookOpen size={14} /> Travel Journal
               </div>
-              <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6">
-                Stories from the <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">Open Road</span>
+              <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 overflow-hidden">
+                {splitText("Stories from the")} <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">{splitText("Open Road")}</span>
               </h1>
               <p className="text-lg text-slate-600 leading-relaxed">
                 Inspiration, tips, and guides for the modern explorer. Join our community of travelers sharing their adventures and insights.

@@ -10,9 +10,10 @@ import DashboardPage from './pages/DashboardPage';
 import FeaturesPage from './pages/FeaturesPage';
 import SavedPage from './pages/SavedPage';
 import TripsPage from './pages/TripsPage';
+import ProfilePage from './pages/ProfilePage';
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'blog' | 'features' | 'saved' | 'trips'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'blog' | 'features' | 'saved' | 'trips' | 'profile'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleNavigate = (page: string) => {
@@ -48,6 +49,8 @@ export default function App() {
         return <SavedPage onLogout={handleLogout} onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'trips':
         return <TripsPage onLogout={handleLogout} onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
+      case 'profile':
+        return <ProfilePage onLogout={handleLogout} onNavigate={handleNavigate} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'faq':

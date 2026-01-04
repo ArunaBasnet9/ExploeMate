@@ -6,7 +6,14 @@ import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FAQItem = ({ question, answer, isOpen, onClick }: { question: string, answer: string, isOpen: boolean, onClick: () => void }) => {
+interface FAQItemProps {
+  question: string;
+  answer: string;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isOpen, onClick }) => {
   return (
     <div className="border-b border-slate-200 last:border-0 faq-fade-up">
       <button 
@@ -35,6 +42,14 @@ const FAQPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => voi
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   useEffect(() => {
+    const tl = gsap.timeline();
+
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' }
+    );
+
     gsap.utils.toArray('.faq-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
         { y: 30, opacity: 0 },
@@ -45,6 +60,14 @@ const FAQPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => voi
       );
     });
   }, []);
+
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
 
   const faqs = [
     {
@@ -83,8 +106,8 @@ const FAQPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => voi
              <div className="faq-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-sky-700 font-bold text-xs uppercase tracking-wider border border-sky-200 mb-6">
                 <HelpCircle size={14} /> Help Center
              </div>
-             <h1 className="faq-fade-up text-5xl md:text-6xl font-display font-bold text-slate-900 mb-6">
-               Frequently Asked Questions
+             <h1 className="faq-fade-up text-5xl md:text-6xl font-display font-bold text-slate-900 mb-6 overflow-hidden">
+               {splitText("Frequently Asked Questions")}
              </h1>
              <p className="faq-fade-up text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
                Have questions? We're here to help. Find answers to the most common questions about ExploreMate features, pricing, and travel tools.

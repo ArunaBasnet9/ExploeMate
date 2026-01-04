@@ -72,6 +72,14 @@ const PricingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
   const [isAnnual, setIsAnnual] = useState(true);
 
   useEffect(() => {
+    const tl = gsap.timeline();
+
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' }
+    );
+
     gsap.utils.toArray('.pricing-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
         { y: 50, opacity: 0 },
@@ -90,6 +98,14 @@ const PricingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
       }
     );
   }, []);
+
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
 
   const tiers = [
     {
@@ -151,9 +167,9 @@ const PricingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
              <div className="pricing-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-sky-700 font-bold text-xs uppercase tracking-wider border border-sky-200 mb-6">
                 <Sparkles size={14} /> Unlock the World
              </div>
-             <h1 className="pricing-fade-up text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8">
-               Invest in Memories, <br/>
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">Not Logistics.</span>
+             <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8 overflow-hidden">
+               {splitText("Invest in Memories,")} <br/>
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">{splitText("Not Logistics.")}</span>
              </h1>
              <p className="pricing-fade-up text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed mb-12">
                Choose the plan that fits your travel style. Whether you're a weekend explorer or a full-time digital nomad, we have tools to make your journey seamless.

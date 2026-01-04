@@ -41,6 +41,14 @@ const FeatureSection = ({ title, subTitle, description, icon: Icon, align = 'lef
 
 const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
+    const tl = gsap.timeline();
+
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' }
+    );
+
     // Staggered animation for the overview cards
     gsap.fromTo('.overview-card', 
       { y: 50, opacity: 0 },
@@ -71,6 +79,14 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
     });
   }, []);
 
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
+
   return (
     <div className="w-full relative bg-slate-50/50">
        <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
@@ -81,9 +97,9 @@ const FeaturesPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =
              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-bold text-xs uppercase tracking-wider border border-purple-200 mb-6 font-grotesk">
                 <Zap size={14} /> Next-Gen Tourist System
              </div>
-             <h1 className="text-4xl md:text-6xl font-grotesk font-bold text-slate-900 mb-8">
-               Smart Travel, <br/>
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-sky-500">Intelligent Guidance</span>
+             <h1 className="text-4xl md:text-6xl font-grotesk font-bold text-slate-900 mb-8 overflow-hidden">
+               {splitText("Smart Travel,")} <br/>
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-sky-500">{splitText("Intelligent Guidance")}</span>
              </h1>
              <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-sans">
                A complete digital ecosystem replacing traditional guides with accurate, real-time, and AI-driven personalized experiences.

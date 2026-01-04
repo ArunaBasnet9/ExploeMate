@@ -40,34 +40,60 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
   useEffect(() => {
     const tl = gsap.timeline();
 
-    // Hero Animations
+    // 1. Hero Badge Pop
     tl.fromTo('.hero-badge', 
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }
-    )
-    .fromTo('.hero-title-char', 
-      { y: 50, opacity: 0, rotateX: -90 },
-      { y: 0, opacity: 1, rotateX: 0, stagger: 0.02, duration: 0.8, ease: 'back.out(1.2)' },
-      "-=0.4"
-    )
-    .fromTo('.hero-desc',
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out',
+      { y: 20, opacity: 0, scale: 0.9 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.7)' }
+    );
+
+    // 2. Modern Text Reveal (Skew + Slide Up)
+    tl.fromTo('.hero-title-char', 
+      { y: 100, opacity: 0, skewY: 10, rotateZ: 5 },
+      { 
+        y: 0, 
+        opacity: 1, 
+        skewY: 0, 
+        rotateZ: 0,
+        stagger: 0.02, 
+        duration: 1, 
+        ease: 'power4.out' 
       },
+      "-=0.2"
+    );
+
+    // 3. Description & Buttons Fade Up
+    tl.fromTo('.hero-desc',
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' },
       "-=0.6"
     )
     .fromTo('.hero-btn',
       { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: 'power3.out' },
+      { y: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: 'power2.out' },
       "-=0.6"
-    )
-    .fromTo('.hero-visual',
-      { scale: 0.9, opacity: 0, y: 30 },
-      { scale: 1, opacity: 1, y: 0, duration: 1, ease: 'power3.out' },
-      "-=0.8"
     );
 
-    // Scroll Triggers
+    // 4. Cinematic Visual Entry
+    // Container pops in
+    tl.fromTo('.hero-visual-wrapper',
+      { scale: 0.9, opacity: 0, y: 40 },
+      { scale: 1, opacity: 1, y: 0, duration: 1.2, ease: 'power3.out' },
+      "-=0.8"
+    )
+    // Image inside zooms out (Scale 1.4 -> 1) for a cinematic reveal effect
+    .fromTo('.hero-main-image',
+      { scale: 1.4 },
+      { scale: 1, duration: 2, ease: 'power2.out' },
+      "<" // Starts at same time as wrapper animation
+    )
+    // Floating cards pop
+    .fromTo('.hero-floating-card',
+      { scale: 0.8, opacity: 0, y: 20 },
+      { scale: 1, opacity: 1, y: 0, stagger: 0.2, duration: 0.8, ease: 'elastic.out(1, 0.75)' },
+      "-=1.5"
+    );
+
+    // Scroll Triggers for other sections
     gsap.utils.toArray('.section-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem,
         { y: 50, opacity: 0 },
@@ -90,7 +116,7 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
 
   const splitText = (text: string) => {
     return text.split('').map((char, index) => (
-      <span key={index} className="hero-title-char inline-block whitespace-pre">
+      <span key={index} className="hero-title-char inline-block whitespace-pre origin-bottom will-change-transform">
         {char}
       </span>
     ));
@@ -98,25 +124,25 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
 
   const popularDestinations = [
     {
-      title: "Kyoto Ancient Temples",
-      location: "Kyoto, Japan",
+      title: "Everest Base Camp",
+      location: "Solukhumbu, Nepal",
       rating: "4.9",
-      price: "1,200",
-      image: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=800"
+      price: "1,400",
+      image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Santorini Sunset",
-      location: "Santorini, Greece",
+      title: "Phewa Lake Serenity",
+      location: "Pokhara, Nepal",
       rating: "4.8",
-      price: "2,400",
-      image: "https://images.unsplash.com/photo-1613395877344-13d4c79e4284?auto=format&fit=crop&q=80&w=800"
+      price: "600",
+      image: "https://images.unsplash.com/photo-1546853899-709e50423661?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Machu Picchu Trek",
-      location: "Cusco, Peru",
+      title: "Bhaktapur Durbar Square",
+      location: "Bhaktapur, Nepal",
       rating: "4.9",
-      price: "1,800",
-      image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?auto=format&fit=crop&q=80&w=800"
+      price: "50",
+      image: "https://images.unsplash.com/photo-1596525712437-080c950294da?auto=format&fit=crop&q=80&w=800"
     }
   ];
 
@@ -132,12 +158,12 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
               <Sparkles size={14} className="fill-sky-600" /> AI-Powered Travel
             </div>
             
-            <h1 ref={textRef} className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 leading-[1.1]">
-              {splitText("Explore the World\nwith Intelligence")}
+            <h1 ref={textRef} className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 leading-[1.1] overflow-hidden">
+              {splitText("Explore Nepal\nwith Intelligence")}
             </h1>
             
             <p className="hero-desc text-lg md:text-xl text-slate-500 mb-10 max-w-lg leading-relaxed">
-              Experience personalized itineraries, real-time guidance, and seamless planning powered by next-gen AI.
+              Experience personalized itineraries for the Himalayas, real-time trekking guidance, and seamless planning powered by next-gen AI.
             </p>
             
             <div className="flex items-center gap-4">
@@ -162,22 +188,27 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
              
              {/* Main Image Composition */}
              <div className="relative z-10 w-full max-w-md">
-                <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white transform rotate-3 hover:rotate-0 transition-transform duration-500">
-                   <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&q=80&w=800" alt="Hero" className="w-full h-[500px] object-cover" />
+                <div className="hero-visual-wrapper relative rounded-[3rem] overflow-hidden shadow-2xl border-4 border-white transform rotate-3 hover:rotate-0 transition-transform duration-500 group">
+                   {/* Main Image with Zoom Effect - Showing Swayambhunath/Kathmandu vibes */}
+                   <img 
+                    src="https://images.unsplash.com/photo-1582650625119-3a31f8fa2699?auto=format&fit=crop&q=80&w=800" 
+                    alt="Nepal Hero" 
+                    className="hero-main-image w-full h-[500px] object-cover will-change-transform" 
+                   />
                    
                    {/* Floating Cards */}
-                   <div className="absolute bottom-8 left-8 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/50 max-w-[200px] animate-float">
+                   <div className="hero-floating-card absolute bottom-8 left-8 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-white/50 max-w-[200px] animate-float">
                       <div className="flex items-center gap-3 mb-2">
                          <div className="p-2 bg-green-100 text-green-600 rounded-lg"><Compass size={18} /></div>
                          <div className="text-xs font-bold text-slate-500">AI Recommendation</div>
                       </div>
-                      <p className="text-slate-800 font-bold text-sm leading-tight">Visit Hallstatt early to avoid crowds.</p>
+                      <p className="text-slate-800 font-bold text-sm leading-tight">Visit Swayambhunath early to avoid crowds.</p>
                    </div>
 
-                   <div className="absolute top-8 right-8 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white/50 animate-float" style={{ animationDelay: '1s' }}>
+                   <div className="hero-floating-card absolute top-8 right-8 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-white/50 animate-float" style={{ animationDelay: '1s' }}>
                       <div className="flex items-center gap-2">
                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                         <span className="text-xs font-bold text-slate-800">Live Traffic Update</span>
+                         <span className="text-xs font-bold text-slate-800">Traffic: Thamel</span>
                       </div>
                    </div>
                 </div>
@@ -191,8 +222,8 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
          <div className="max-w-7xl mx-auto px-4 md:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 section-fade-up">
                <div>
-                  <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 mb-4">Trending Destinations</h2>
-                  <p className="text-slate-500 text-lg max-w-md">Curated by AI based on current weather, events, and popularity.</p>
+                  <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 mb-4">Trending in Nepal</h2>
+                  <p className="text-slate-500 text-lg max-w-md">Curated by AI based on current weather, festivals, and traveler reviews.</p>
                </div>
                <button className="text-sky-600 font-bold hover:text-sky-700 flex items-center gap-2 group">
                   View All Locations <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -219,7 +250,7 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
                      Your Personal AI Travel Assistant
                   </h2>
                   <p className="text-slate-300 text-lg mb-12 leading-relaxed">
-                     From real-time translation to dynamic itinerary adjustments based on weather, ExploreMate handles the logistics so you can focus on the experience.
+                     From real-time translation of Nepali to dynamic itinerary adjustments based on mountain weather, ExploreMate handles the logistics.
                   </p>
                   <button 
                      onClick={() => onNavigate('features')}

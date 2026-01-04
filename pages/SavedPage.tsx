@@ -82,9 +82,15 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
           { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
         );
 
+        // Modern Text Reveal
+        gsap.fromTo('.reveal-text-char', 
+            { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+            { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out', delay: 0.2 }
+        );
+
         gsap.fromTo('.saved-header-anim', 
             { y: 30, opacity: 0 }, 
-            { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.2 }
+            { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.3 }
         );
         
         gsap.fromTo('.filter-chip', 
@@ -104,7 +110,7 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
   useEffect(() => {
     // Grid Animation
     if (containerRef.current) {
-        gsap.fromTo(containerRef.current.children,
+        gsap.fromTo(containerRef.current.querySelectorAll('.saved-grid-item'),
             { y: 40, opacity: 0, scale: 0.95 },
             { 
                 y: 0, 
@@ -118,6 +124,14 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         );
     }
   }, [activeFilter]);
+
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
 
   const onCardHover = (e: React.MouseEvent<HTMLDivElement>, enter: boolean) => {
     const target = e.currentTarget;
@@ -160,7 +174,7 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
     { label: 'Explore', icon: Compass, page: 'dashboard' },
     { label: 'Saved', icon: Mountain, page: 'saved' },
     { label: 'Trips', icon: Calendar, page: 'trips' },
-    { label: 'Profile', icon: User, page: 'dashboard' }
+    { label: 'Profile', icon: User, page: 'profile' }
   ];
 
   return (
@@ -200,7 +214,7 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
           <button onClick={onLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors hidden sm:block">
             Log Out
           </button>
-          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300">
+          <div className="h-11 w-11 rounded-full bg-gradient-to-tr from-sky-400 to-sky-600 p-[2px] shadow-lg cursor-pointer hover:scale-110 transition-transform duration-300" onClick={() => onNavigate('profile')}>
              <img src="https://i.pravatar.cc/150?img=32" alt="Profile" className="w-full h-full rounded-full border-2 border-white object-cover" />
           </div>
         </div>
@@ -211,8 +225,8 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         <div ref={headerRef} className="mb-12">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8">
                 <div>
-                    <h1 className="saved-header-anim text-4xl md:text-6xl font-display font-bold text-slate-900 mb-4 tracking-tight">
-                        Your Collection
+                    <h1 className="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-4 tracking-tight overflow-hidden">
+                        {splitText("Your Collection")}
                     </h1>
                     <p className="saved-header-anim text-slate-500 text-lg max-w-lg">
                         {SAVED_ITEMS.length} saved items waiting for your next adventure. Organized and ready when you are.
@@ -239,11 +253,11 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
             </div>
 
             {/* Grid */}
-            <div ref={containerRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredItems.map((item) => (
                     <div 
                         key={item.id} 
-                        className="group bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100 flex flex-col h-full cursor-pointer relative overflow-hidden"
+                        className="saved-grid-item group bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100 flex flex-col h-full cursor-pointer relative overflow-hidden"
                         onMouseEnter={(e) => onCardHover(e, true)}
                         onMouseLeave={(e) => onCardHover(e, false)}
                     >

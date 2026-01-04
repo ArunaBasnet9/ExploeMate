@@ -8,6 +8,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 const AboutPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   useEffect(() => {
+    const tl = gsap.timeline();
+
+    // Modern Text Reveal
+    tl.fromTo('.reveal-text-char', 
+        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' }
+    );
+
     gsap.utils.toArray('.about-fade-up').forEach((elem: any) => {
       gsap.fromTo(elem, 
         { y: 50, opacity: 0 },
@@ -19,6 +27,14 @@ const AboutPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => v
     });
   }, []);
 
+  const splitText = (text: string) => {
+    return text.split('').map((char, index) => (
+      <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
+        {char}
+      </span>
+    ));
+  };
+
   return (
     <div className="w-full relative">
        <Navbar onNavigate={onNavigate} isLoggedIn={isLoggedIn} />
@@ -29,9 +45,9 @@ const AboutPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => v
              <div className="about-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-sky-700 font-bold text-xs uppercase tracking-wider border border-sky-200 mb-6">
                 <Building size={14} /> Our Story
              </div>
-             <h1 className="about-fade-up text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8">
-               Redefining Travel with <br/>
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">Artificial Intelligence</span>
+             <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8 overflow-hidden">
+               {splitText("Redefining Travel with")} <br/>
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-sunset-500">{splitText("Artificial Intelligence")}</span>
              </h1>
              <p className="about-fade-up text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
                At ExploreMate, we believe travel should be seamless, personalized, and unforgettable. By harnessing the power of advanced AI, we connect travelers to authentic experiences, smart routes, and local cultures like never before.
