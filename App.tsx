@@ -15,6 +15,7 @@ import TripsPage from './pages/TripsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import RouteOptimizerPage from './pages/RouteOptimizerPage';
+import TranslatorPage from './pages/TranslatorPage';
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -151,7 +152,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleNavigate = (page: string) => {
@@ -193,6 +194,8 @@ export default function App() {
         return <NotificationsPage onNavigate={handleNavigate} />;
       case 'route-optimizer':
         return <RouteOptimizerPage onNavigate={handleNavigate} />;
+      case 'translator':
+        return <TranslatorPage onNavigate={handleNavigate} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'faq':
