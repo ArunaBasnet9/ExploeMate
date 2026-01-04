@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Cloud, Sun, CloudRain, Snowflake, Wind, CloudLightning, Droplets, Newspaper, ArrowRight, MapPin, ExternalLink, RefreshCw, AlertTriangle, Clock } from 'lucide-react';
+import { Cloud, Sun, CloudRain, Snowflake, Wind, CloudLightning, Droplets, Newspaper, ArrowRight, MapPin, ExternalLink, RefreshCw, AlertTriangle, Clock, Loader2 } from 'lucide-react';
 import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -36,53 +36,13 @@ const NEPAL_CITIES = [
   { name: 'Lumbini', lat: 27.4840, lon: 83.2760 },
 ];
 
-const MOCK_NEWS: NewsItem[] = [
-  {
-    id: 1,
-    title: "Nepal Tourism Board Announces New 'Visit Nepal' Decade 2023-2032",
-    summary: "Government unveils strategic plan to revitalize tourism, focusing on sustainable trekking routes and promoting off-the-beaten-path destinations in Western Nepal.",
-    source: "Kathmandu Post",
-    date: "2 hours ago",
-    category: "Policy",
-    image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=800"
-  },
-  {
-    id: 2,
-    title: "Pokhara Regional International Airport Sees Increase in Flights",
-    summary: "New connecting flights from major Asian hubs are expected to boost tourism in the Annapurna region significantly this coming season.",
-    source: "Himalayan Times",
-    date: "5 hours ago",
-    category: "Aviation",
-    image: "https://images.unsplash.com/photo-1546853899-709e50423661?auto=format&fit=crop&q=80&w=800"
-  },
-  {
-    id: 3,
-    title: "Snowfall Reported in Mustang: Trekkers Advised Caution",
-    summary: "Early winter snowfall has covered Upper Mustang. ACAP officials recommend hiring certified guides and checking gear before attempting Thorong La Pass.",
-    source: "Nepal News",
-    date: "1 day ago",
-    category: "Weather Alert",
-    image: "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&q=80&w=800"
-  },
-  {
-    id: 4,
-    title: "Chitwan National Park records highest rhino numbers in years",
-    summary: "Conservation efforts yield positive results as the one-horned rhino population sees a steady increase, attracting wildlife enthusiasts globally.",
-    source: "Republica",
-    date: "2 days ago",
-    category: "Wildlife",
-    image: "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&q=80&w=800"
-  }
-];
-
 const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [weatherList, setWeatherList] = useState<WeatherData[]>([]);
   const [loadingWeather, setLoadingWeather] = useState(true);
-  const [newsList, setNewsList] = useState<NewsItem[]>(MOCK_NEWS);
+  const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
-  const [usingRealNews, setUsingRealNews] = useState(false);
   const [nepalTime, setNepalTime] = useState<string>("");
-  const [activeSource, setActiveSource] = useState<string>("Nepal News");
+  const [activeSource, setActiveSource] = useState<string>("OnlineKhabar");
 
   // Update Nepal Time Clock
   useEffect(() => {
@@ -135,10 +95,11 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
     setLoadingNews(true);
     
     // Fallback strategy: Try multiple reliable RSS feeds from Nepal
+    // Prioritized OnlineKhabar as requested
     const feeds = [
+      { url: 'https://english.onlinekhabar.com/feed', name: 'OnlineKhabar' },
       { url: 'https://www.nepalitimes.com/feed', name: 'Nepali Times' },
-      { url: 'https://thehimalayantimes.com/feed', name: 'Himalayan Times' },
-      { url: 'https://english.onlinekhabar.com/feed', name: 'OnlineKhabar' }
+      { url: 'https://thehimalayantimes.com/feed', name: 'Himalayan Times' }
     ];
 
     let success = false;
@@ -176,14 +137,13 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
                         summary: cleanSummary,
                         source: feed.name,
                         date: new Date(item.pubDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                        image: imageUrl || MOCK_NEWS[index % MOCK_NEWS.length].image, // Fallback image if absolute none found
+                        image: imageUrl || "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=800", // Generic Nepal Image
                         category: "Latest",
                         link: item.link
                     };
                 });
                 
                 setNewsList(mappedNews);
-                setUsingRealNews(true);
                 setActiveSource(feed.name);
                 success = true;
                 break; // Stop loop on success
@@ -194,10 +154,9 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
     }
 
     if (!success) {
-        console.warn("All real news feeds failed. Loading mock data.");
-        setNewsList(MOCK_NEWS);
-        setUsingRealNews(false);
-        setActiveSource("Demo Data");
+        console.warn("All real news feeds failed.");
+        setNewsList([]);
+        setActiveSource("Unavailable");
     }
 
     setLoadingNews(false);
@@ -210,7 +169,7 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
 
   // Animations
   useEffect(() => {
-    if (!loadingNews) {
+    if (!loadingNews && newsList.length > 0) {
       const tl = gsap.timeline();
 
       tl.fromTo('.news-header', 
@@ -236,7 +195,7 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
         );
       });
     }
-  }, [loadingWeather, loadingNews]);
+  }, [loadingWeather, loadingNews, newsList.length]);
 
   const getWeatherIcon = (code: number, isDay: number) => {
     if (code >= 95) return <CloudLightning size={32} className="text-purple-500" />;
@@ -264,19 +223,16 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
         {/* Header */}
         <div className="news-header flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600 text-white font-bold text-xs uppercase tracking-wider mb-4 border border-red-700 shadow-lg shadow-red-600/30">
-               <Newspaper size={14} /> News Source: {usingRealNews ? activeSource : 'Demo Data'}
-            </div>
             <h1 className="text-4xl md:text-6xl font-display font-bold text-slate-900 leading-tight">
               Nepal <span className="text-sky-600">News & Weather</span>
             </h1>
             <p className="text-slate-500 mt-4 text-lg max-w-2xl">
-              Stay informed with real-time weather conditions across the Himalayas and the latest stories from {activeSource}.
+              Stay informed with real-time weather conditions across the Himalayas and the latest stories.
             </p>
           </div>
           <div className="text-right">
              <div className="flex items-center justify-end gap-2 text-sm font-bold text-sky-600 uppercase tracking-widest mb-1">
-                <Clock size={16} /> Kathmandu Time
+                <Clock size={16} /> Nepal Time
              </div>
              <div className="text-4xl font-display font-bold text-slate-800">
                {nepalTime || "--:-- --"}
@@ -333,26 +289,43 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
            <div className="lg:col-span-2 space-y-8">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-8">
                  <h2 className="text-2xl font-bold text-slate-800">Latest Headlines</h2>
-                 <span className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 ${usingRealNews ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                    {usingRealNews ? (
-                        <><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Connected: {activeSource}</>
-                    ) : '● Demo Mode'}
-                 </span>
+                 {loadingNews && (
+                    <div className="flex items-center gap-2 text-sky-600 font-bold text-sm animate-pulse">
+                       <Loader2 size={16} className="animate-spin" /> Updating Feed...
+                    </div>
+                 )}
+                 {!loadingNews && newsList.length > 0 && (
+                     <span className="text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 bg-emerald-100 text-emerald-700">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Connected
+                     </span>
+                 )}
               </div>
 
-              {!usingRealNews && !loadingNews && (
-                 <div className="bg-orange-50 border border-orange-200 p-4 rounded-xl flex items-start gap-3 mb-6">
-                    <AlertTriangle size={20} className="text-orange-500 shrink-0 mt-0.5" />
-                    <div className="text-sm text-orange-800">
-                       <span className="font-bold">Connection Issue:</span> Unable to reach RSS feeds from Nepal right now (CORS or network restriction). Showing mock data for demonstration.
+              {!loadingNews && newsList.length === 0 && (
+                 <div className="bg-orange-50 border border-orange-200 p-8 rounded-xl flex flex-col items-center justify-center text-center gap-3 mb-6">
+                    <AlertTriangle size={32} className="text-orange-500" />
+                    <div className="text-orange-800">
+                       <h3 className="font-bold text-lg">Unable to load news</h3>
+                       <p className="text-sm mt-1">We couldn't connect to the news feed at this time. Please try again later.</p>
+                       <button onClick={fetchRealNews} className="mt-4 px-4 py-2 bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold rounded-lg text-sm transition-colors flex items-center gap-2 mx-auto">
+                           <RefreshCw size={14} /> Retry
+                       </button>
                     </div>
                  </div>
               )}
 
               {loadingNews ? (
                  <div className="space-y-6">
-                    {[1,2,3].map(i => (
-                       <div key={i} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 h-48 animate-pulse"></div>
+                    {[1,2,3,4,5].map(i => (
+                       <div key={i} className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-6 animate-pulse">
+                          <div className="w-full md:w-48 h-48 bg-slate-100 rounded-2xl shrink-0"></div>
+                          <div className="flex-grow space-y-3 py-2">
+                             <div className="w-32 h-4 bg-slate-100 rounded"></div>
+                             <div className="w-full h-8 bg-slate-100 rounded"></div>
+                             <div className="w-full h-16 bg-slate-100 rounded"></div>
+                             <div className="w-24 h-4 bg-slate-100 rounded mt-auto"></div>
+                          </div>
+                       </div>
                     ))}
                  </div>
               ) : (
@@ -431,25 +404,6 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
                        </li>
                     ))}
                  </ul>
-              </div>
-
-              {/* Exchange Rate Mini */}
-              <div className="bg-slate-900 text-white rounded-[2rem] p-6 shadow-xl news-item relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/20 rounded-full blur-[40px]"></div>
-                  <h3 className="font-bold mb-4 relative z-10">Exchange Rates</h3>
-                  <div className="space-y-3 relative z-10">
-                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">1 USD</span>
-                        <span className="font-bold font-mono">~ 133.5 NPR</span>
-                     </div>
-                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">1 EUR</span>
-                        <span className="font-bold font-mono">~ 145.2 NPR</span>
-                     </div>
-                  </div>
-                  <div className="mt-4 text-[10px] text-slate-500 text-center">
-                     *Indicative rates. Check local banks.
-                  </div>
               </div>
            </div>
         </div>
