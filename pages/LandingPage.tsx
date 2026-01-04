@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Sparkles, ArrowRight, Globe, MapPin, Star, Heart, Compass, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Globe, MapPin, Star, Heart, Compass, Zap, Coins, ArrowRightLeft, RefreshCw, TrendingUp } from 'lucide-react';
 import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -32,6 +32,141 @@ const DestinationCard = ({ image, title, location, rating, price, index }: any) 
     </div>
   </div>
 );
+
+const CurrencyConverter = () => {
+  const [amount, setAmount] = useState<string>("100");
+  const [fromCurrency, setFromCurrency] = useState('USD');
+  const [toCurrency, setToCurrency] = useState('NPR');
+  const [rate, setRate] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
+
+  const currencies = [
+    { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
+    { code: 'NPR', name: 'Nepalese Rupee', flag: '🇳🇵' },
+    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+    { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
+    { code: 'INR', name: 'Indian Rupee', flag: '🇮🇳' },
+    { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺' },
+    { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵' },
+    { code: 'CNY', name: 'Chinese Yuan', flag: '🇨🇳' },
+    { code: 'SGD', name: 'Singapore Dollar', flag: '🇸🇬' },
+    { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪' },
+  ];
+
+  const fetchRate = async () => {
+    setLoading(true);
+    try {
+      // Using open.er-api.com for free real-time exchange rates
+      const res = await fetch(`https://open.er-api.com/v6/latest/${fromCurrency}`);
+      const data = await res.json();
+      if (data && data.rates) {
+        setRate(data.rates[toCurrency]);
+        const date = new Date(data.time_last_update_utc);
+        setLastUpdated(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch rates", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRate();
+  }, [fromCurrency, toCurrency]);
+
+  const handleSwap = () => {
+    setFromCurrency(toCurrency);
+    setToCurrency(fromCurrency);
+  };
+  
+  const convertedAmount = rate && amount ? (parseFloat(amount) * rate).toFixed(2) : '---';
+
+  return (
+    <div className="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100 relative overflow-hidden group hover:shadow-2xl transition-all duration-300">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 relative z-10 gap-4">
+            <div>
+                <h3 className="text-2xl font-display font-bold text-slate-900 flex items-center gap-2">
+                   <Coins className="text-emerald-500" /> Currency Converter
+                </h3>
+                <p className="text-slate-500 text-sm mt-1">Live exchange rates for international travelers.</p>
+            </div>
+            {rate && (
+                <div className="text-left sm:text-right bg-emerald-50 px-4 py-2 rounded-xl sm:bg-transparent sm:p-0">
+                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Rate</div>
+                     <div className="font-mono font-bold text-emerald-600">1 {fromCurrency} = {rate.toFixed(2)} {toCurrency}</div>
+                </div>
+            )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center relative z-10">
+            {/* From */}
+            <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Amount & Currency</label>
+                <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-emerald-400 focus-within:ring-4 focus-within:ring-emerald-50 transition-all">
+                    <input 
+                        type="number" 
+                        value={amount} 
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="bg-transparent w-full p-2 text-xl font-bold text-slate-800 outline-none"
+                        placeholder="100"
+                        min="0"
+                    />
+                    <div className="w-px bg-slate-200 my-1 mx-2"></div>
+                    <select 
+                        value={fromCurrency}
+                        onChange={(e) => setFromCurrency(e.target.value)}
+                        className="bg-transparent font-bold text-slate-700 outline-none cursor-pointer pr-2"
+                    >
+                        {currencies.map(c => <option key={c.code} value={c.code}>{c.code} {c.flag}</option>)}
+                    </select>
+                </div>
+            </div>
+
+            {/* Swap Button */}
+            <div className="flex justify-center md:pt-6">
+                <button 
+                    onClick={handleSwap}
+                    className="p-3 rounded-full bg-slate-100 text-slate-500 hover:bg-emerald-100 hover:text-emerald-600 transition-all hover:rotate-180 active:scale-90 shadow-sm"
+                    title="Swap Currencies"
+                >
+                    <ArrowRightLeft size={20} />
+                </button>
+            </div>
+
+            {/* To */}
+            <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Converted To</label>
+                <div className="flex bg-slate-50 p-2 rounded-2xl border border-slate-200">
+                    <div className="w-full p-2 text-xl font-bold text-slate-800 flex items-center overflow-hidden">
+                       {loading ? <span className="animate-pulse text-slate-400 text-base">Updating...</span> : convertedAmount}
+                    </div>
+                    <div className="w-px bg-slate-200 my-1 mx-2"></div>
+                    <select 
+                        value={toCurrency}
+                        onChange={(e) => setToCurrency(e.target.value)}
+                        className="bg-transparent font-bold text-slate-700 outline-none cursor-pointer pr-2"
+                    >
+                         {currencies.map(c => <option key={c.code} value={c.code}>{c.code} {c.flag}</option>)}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div className="mt-8 flex items-center justify-between text-xs text-slate-400 border-t border-slate-50 pt-4">
+             <div className="flex items-center gap-1">
+                <TrendingUp size={14} /> Exchange rates updated in real-time.
+             </div>
+             <div className="flex items-center gap-1">
+                 <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Last Update: {lastUpdated || 'Just now'}
+             </div>
+        </div>
+    </div>
+  );
+};
 
 const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const heroRef = useRef(null);
@@ -110,6 +245,15 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
         y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: 'power3.out',
         scrollTrigger: { trigger: '.destinations-grid', start: 'top 80%' }
       }
+    );
+    
+    // Currency Converter Animation
+    gsap.fromTo('.currency-section',
+       { y: 60, opacity: 0 },
+       {
+           y: 0, opacity: 1, duration: 0.8, ease: 'power3.out',
+           scrollTrigger: { trigger: '.currency-section', start: 'top 90%' }
+       }
     );
 
   }, []);
@@ -217,8 +361,15 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
         </div>
       </section>
 
+      {/* Currency Converter Section */}
+      <section className="currency-section py-8 relative px-4 md:px-8 -mt-8 md:-mt-16 z-20">
+         <div className="max-w-4xl mx-auto">
+            <CurrencyConverter />
+         </div>
+      </section>
+
       {/* Destinations Section */}
-      <section className="py-24 bg-white relative">
+      <section className="py-24 bg-white relative z-10">
          <div className="max-w-7xl mx-auto px-4 md:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6 section-fade-up">
                <div>
