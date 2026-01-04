@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { BookOpen, Clock, Calendar, ArrowRight, ChevronDown, Mail } from 'lucide-react';
+import { BookOpen, Clock, Calendar, ArrowRight, ChevronDown, Mail, Check, Loader2 } from 'lucide-react';
 import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -33,6 +33,9 @@ const BlogCard = ({ image, category, title, excerpt, date, readTime }: any) => (
 );
 
 const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+
   useEffect(() => {
     const tl = gsap.timeline();
 
@@ -67,6 +70,24 @@ const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
         {char}
       </span>
     ));
+  };
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setStatus('loading');
+
+    // Simulate API call
+    setTimeout(() => {
+      setStatus('success');
+      setEmail('');
+      
+      // Reset status after showing success message
+      setTimeout(() => {
+        setStatus('idle');
+      }, 3000);
+    }, 1500);
   };
 
   const posts = [
@@ -212,14 +233,27 @@ const BlogPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
                      Join 50,000+ travelers getting the best travel deals, hidden gems, and inspiration delivered weekly. No spam, ever.
                   </p>
                   
-                  <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
+                  <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-4 relative" onSubmit={handleSubscribe}>
                      <input 
                         type="email" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email address" 
-                        className="flex-grow px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-sky-200 focus:outline-none focus:bg-white/20 transition-all font-medium"
+                        disabled={status === 'loading' || status === 'success'}
+                        className="flex-grow px-6 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-sky-200 focus:outline-none focus:bg-white/20 transition-all font-medium disabled:opacity-50"
                      />
-                     <button className="px-8 py-4 bg-white text-sky-900 font-bold rounded-xl hover:bg-sky-50 transition-colors shadow-lg">
-                        Subscribe
+                     <button 
+                        disabled={status === 'loading' || status === 'success'}
+                        className={`px-8 py-4 font-bold rounded-xl transition-all shadow-lg min-w-[140px] flex items-center justify-center gap-2 ${
+                            status === 'success' 
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+                            : 'bg-white text-sky-900 hover:bg-sky-50'
+                        }`}
+                     >
+                        {status === 'loading' && <Loader2 size={20} className="animate-spin" />}
+                        {status === 'success' && <Check size={20} />}
+                        {status === 'idle' && 'Subscribe'}
+                        {status === 'success' && 'Joined!'}
                      </button>
                   </form>
                </div>
