@@ -237,7 +237,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight">Namaste, Alex!</h1>
-                <p className="text-sky-100 max-w-md text-lg font-medium leading-relaxed opacity-90">
+                <p className="text-sky-100 max-w-md text-lg font-medium leading-relaxed opacity-90 pr-2">
                     {weather.loading ? (
                         <span className="animate-pulse">Checking local weather conditions...</span>
                     ) : (
@@ -248,17 +248,17 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                     )}
                 </p>
               </div>
-              <div className="text-right hidden sm:block">
+              <div className="text-right shrink-0">
                  {weather.loading ? (
                      <div className="flex flex-col items-end gap-2 animate-pulse opacity-50">
-                        <div className="w-16 h-16 bg-white/20 rounded-full"></div>
-                        <div className="w-20 h-12 bg-white/20 rounded-xl"></div>
+                        <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full"></div>
+                        <div className="w-16 h-8 md:w-20 md:h-12 bg-white/20 rounded-xl"></div>
                      </div>
                  ) : (
-                     <>
+                     <div className="transform scale-75 origin-top-right md:scale-100 transition-transform">
                         {getWeatherIcon(weather.code)}
                         <div className="text-5xl font-grotesk font-bold tracking-tighter">{weather.temp}°</div>
-                     </>
+                     </div>
                  )}
               </div>
             </div>
