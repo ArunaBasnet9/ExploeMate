@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { MapPin, Navigation, Plus, ArrowRight, Clock, Gauge, ArrowLeft, GripVertical, X, MoreVertical, Settings } from 'lucide-react';
+import { MapPin, Navigation, Plus, Clock, Gauge, ArrowLeft, GripVertical, X, MoreVertical, Settings } from 'lucide-react';
 import { Marker, Popup, Polyline } from 'react-leaflet';
 import LeafletMap, { customIcon } from '../components/LeafletMap';
 
@@ -19,9 +19,13 @@ const MOCK_WAYPOINTS: Waypoint[] = [
 
 const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [waypoints, setWaypoints] = useState<Waypoint[]>([MOCK_WAYPOINTS[0], MOCK_WAYPOINTS[1]]);
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([
+      { id: 1, location: "Locating you...", coords: [27.7172, 85.3240] }, // Default temp placeholder
+      MOCK_WAYPOINTS[1]
+  ]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOptimized, setIsOptimized] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([27.7172, 85.3240]);
   
   // Animation setup
   useEffect(() => {
@@ -48,22 +52,87 @@ const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void
     return () => ctx.revert();
   }, []);
 
+  // Get User Location
+  useEffect(() => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                setMapCenter([lat, lon]);
+
+                try {
+                    // Reverse geocode to get address name
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+                    const data = await res.json();
+                    
+                    // Construct a friendly name
+                    let locationName = "My Current Location";
+                    if (data && data.address) {
+                        const addr = data.address;
+                        locationName = addr.amenity || addr.shop || addr.tourism || addr.building || 
+                                      `${addr.road || ''} ${addr.suburb || ''}`.trim() || 
+                                      addr.city || addr.town || "My Location";
+                    }
+
+                    setWaypoints(prev => {
+                        const newPoints = [...prev];
+                        newPoints[0] = {
+                            id: 1,
+                            location: locationName,
+                            coords: [lat, lon]
+                        };
+                        return newPoints;
+                    });
+
+                } catch (error) {
+                    console.error("Failed to fetch address:", error);
+                    // Fallback if network fails but GPS worked
+                    setWaypoints(prev => {
+                        const newPoints = [...prev];
+                        newPoints[0] = {
+                            id: 1,
+                            location: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                            coords: [lat, lon]
+                        };
+                        return newPoints;
+                    });
+                }
+            },
+            (error) => {
+                console.warn("GPS access denied, using default location", error);
+                setWaypoints(prev => {
+                    const newPoints = [...prev];
+                    newPoints[0] = MOCK_WAYPOINTS[0]; // Fallback to Thamel
+                    return newPoints;
+                });
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+  }, []);
+
   const handleAddStop = () => {
-    if (waypoints.length < 4) {
-       const nextStop = MOCK_WAYPOINTS[waypoints.length];
+    if (waypoints.length < 5) {
+       // Pick a random mock point that isn't already used (simple logic for demo)
+       const nextStop = MOCK_WAYPOINTS.find(mp => !waypoints.some(wp => wp.coords[0] === mp.coords[0])) || MOCK_WAYPOINTS[2];
+       
        if (nextStop) {
            const newWaypoints = [...waypoints];
-           // Insert before the last item (Destination) if we have more than 1
+           // Insert before the last item (Destination) if we have more than 1, or append
+           const newId = Date.now(); // Unique ID
+           const stopToAdd = { ...nextStop, id: newId };
+
            if(newWaypoints.length > 1) {
-             newWaypoints.splice(newWaypoints.length - 1, 0, nextStop);
+             newWaypoints.splice(newWaypoints.length - 1, 0, stopToAdd);
            } else {
-             newWaypoints.push(nextStop);
+             newWaypoints.push(stopToAdd);
            }
            setWaypoints(newWaypoints);
            
            // Animate new item
            setTimeout(() => {
-               gsap.fromTo(`.waypoint-id-${nextStop.id}`,
+               gsap.fromTo(`.waypoint-id-${newId}`,
                    { height: 0, opacity: 0, marginBottom: 0 },
                    { height: 'auto', opacity: 1, marginBottom: 16, duration: 0.4, ease: 'power2.out' }
                );
@@ -89,9 +158,9 @@ const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void
           
           // Re-order animation simulation
           const shuffled = [...waypoints];
-          // Keep start and end, shuffle middle
+          // Keep start (0) and end (length-1), shuffle middle
           if (shuffled.length > 2) {
-             const middle = shuffled.slice(1, shuffled.length - 1).reverse();
+             const middle = shuffled.slice(1, shuffled.length - 1).reverse(); // Just reverse for demo "optimization"
              const newOrder = [shuffled[0], ...middle, shuffled[shuffled.length - 1]];
              setWaypoints(newOrder);
           }
@@ -131,7 +200,7 @@ const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void
                           
                           <div className="flex-grow">
                               <label className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">
-                                  {index === 0 ? "Start Point" : (index === waypoints.length - 1 ? "Destination" : `Stop ${index}`)}
+                                  {index === 0 ? "Start Point (You)" : (index === waypoints.length - 1 ? "Destination" : `Stop ${index}`)}
                               </label>
                               <div className="relative">
                                   <input 
@@ -221,12 +290,12 @@ const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void
 
       {/* Map View */}
       <div className="route-map flex-grow h-[50vh] md:h-full relative bg-slate-100">
-          <LeafletMap className="w-full h-full z-0" center={[27.700, 85.310]} zoom={13}>
+          <LeafletMap className="w-full h-full z-0" center={mapCenter} zoom={13}>
                {waypoints.map((point, i) => (
                    <Marker key={point.id} position={point.coords} icon={customIcon}>
                       <Popup>
                           <div className="text-center font-sans">
-                              <strong className="text-sky-600">{i + 1}. {point.location}</strong>
+                              <strong className="text-sky-600">{i === 0 ? "Start: " : ""}{point.location}</strong>
                           </div>
                       </Popup>
                    </Marker>
