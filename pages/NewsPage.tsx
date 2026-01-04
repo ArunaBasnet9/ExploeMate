@@ -395,10 +395,14 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
               <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm news-item">
                  <h3 className="font-bold text-slate-900 mb-4">Official Resources</h3>
                  <ul className="space-y-3">
-                    {['Nepal Tourism Board', 'Trekking Agencies Assoc.', 'Dept. of Immigration'].map((link, i) => (
+                    {[
+                      { name: 'Nepal Tourism Board', url: 'https://ntb.gov.np/' },
+                      { name: 'Trekking Agencies Assoc.', url: 'https://www.taan.org.np/' },
+                      { name: 'Dept. of Immigration', url: 'https://www.immigration.gov.np/' }
+                    ].map((item, i) => (
                        <li key={i}>
-                          <a href="#" className="flex items-center justify-between text-sm font-medium text-slate-500 hover:text-sky-600 transition-colors group">
-                             {link}
+                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between text-sm font-medium text-slate-500 hover:text-sky-600 transition-colors group">
+                             {item.name}
                              <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                           </a>
                        </li>
