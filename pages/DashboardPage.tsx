@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Moon, CloudMoon, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, Droplets, Eye, Thermometer } from 'lucide-react';
+import { MapPin, Languages, QrCode, Users, Plane, Bell, Sun, Moon, CloudMoon, Compass, ArrowRight, Sparkles, Search, Mountain, Calendar, User, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, Droplets, Eye, Thermometer, BrainCircuit } from 'lucide-react';
 
 interface WeatherData {
   temp: number;
@@ -18,86 +18,162 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   const containerRef = useRef<HTMLDivElement>(null);
   
   const [weather, setWeather] = useState<WeatherData>({
-    temp: 24,
+    temp: 0,
     code: 0,
     isDay: 1, 
-    location: 'Locating...', // Initial state
+    location: 'Locating...', 
     loading: true,
     humidity: 0,
     windSpeed: 0,
-    visibility: 10000,
+    visibility: 10,
     feelsLike: 0
   });
+
+  const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   
+  // Weather Description Helper
+  const getWeatherDescription = (code: number) => {
+      if (code === 0) return "Clear skies";
+      if (code === 1 || code === 2 || code === 3) return "Partly cloudy";
+      if (code >= 51 && code <= 67) return "Rainy";
+      if (code >= 71 && code <= 77) return "Snowy";
+      if (code >= 95) return "Thunderstorms";
+      return "Overcast";
+  };
+
   useEffect(() => {
-    // Weather & Location Fetching Function
-    const updateWeather = () => {
-        const fetchWeatherData = async (lat: number, lon: number) => {
-            try {
-                // 1. Get Weather Code, Temp, Is_Day, Humidity, Wind, Visibility, Apparent Temp
-                const weatherRes = await fetch(
-                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,visibility,apparent_temperature&temperature_unit=celsius`
-                );
-                const weatherData = await weatherRes.json();
-                
-                // 2. Get Location Name (Reverse Geocoding via OpenStreetMap Nominatim)
-                // Using OpenStreetMap API as requested for exact location details
-                const geoRes = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12`
-                );
-                const geoData = await geoRes.json();
-                
-                const addr = geoData.address || {};
-                // Prioritize granular location names (City -> Town -> Village -> Suburb)
-                const city = addr.city || addr.town || addr.village || addr.municipality || addr.suburb || addr.neighbourhood || "Unknown Location";
-                const country = addr.country || "";
-
-                setWeather({
-                    temp: Math.round(weatherData.current.temperature_2m),
-                    code: weatherData.current.weather_code,
-                    isDay: weatherData.current.is_day,
-                    location: `${city}, ${country}`,
-                    loading: false,
-                    humidity: weatherData.current.relative_humidity_2m,
-                    windSpeed: weatherData.current.wind_speed_10m,
-                    visibility: weatherData.current.visibility,
-                    feelsLike: Math.round(weatherData.current.apparent_temperature)
-                });
-            } catch (error) {
-                console.error("Failed to fetch weather data", error);
-                setWeather(prev => ({ ...prev, loading: false, location: "Weather Unavailable" }));
-            }
-        };
-
-        // Get User Location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // Success: Use User's Location
-                    fetchWeatherData(position.coords.latitude, position.coords.longitude);
-                },
-                (error) => {
-                    console.warn("Geolocation access denied or failed, defaulting to Kathmandu.", error);
-                    // Error/Denied: Fallback to Kathmandu
-                    fetchWeatherData(27.7172, 85.3240);
-                },
-                // Increased timeout to 10s and enabled high accuracy for better precision
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    const fetchWeatherForLocation = async (lat: number, lon: number, cityFallback?: string) => {
+        try {
+            // 1. Fetch Weather Data
+            const weatherRes = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,visibility,apparent_temperature&temperature_unit=celsius&wind_speed_unit=kmh`
             );
-        } else {
-            // Not Supported: Fallback to Kathmandu
-            fetchWeatherData(27.7172, 85.3240);
+            
+            if (!weatherRes.ok) throw new Error("Weather API Error");
+            const weatherInfo = await weatherRes.json();
+
+            // 2. Determine Location Name
+            let locationName = cityFallback || "Unknown Location";
+            
+            if (!cityFallback) {
+                try {
+                    const geoRes = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
+                        { headers: { 'Accept-Language': 'en' } }
+                    );
+                    if (geoRes.ok) {
+                        const geoData = await geoRes.json();
+                        const addr = geoData.address || {};
+                        locationName = addr.city || addr.town || addr.village || addr.municipality || addr.county || geoData.name || "Local Area";
+                    }
+                } catch (e) {
+                    console.warn("Reverse geocoding failed", e);
+                    locationName = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                }
+            }
+
+            // 3. Update State
+            if (weatherInfo && weatherInfo.current) {
+                const current = weatherInfo.current;
+                setWeather({
+                    temp: Math.round(current.temperature_2m),
+                    code: current.weather_code,
+                    isDay: current.is_day,
+                    location: locationName,
+                    loading: false,
+                    humidity: current.relative_humidity_2m ?? 0,
+                    windSpeed: current.wind_speed_10m ?? 0,
+                    visibility: current.visibility ? current.visibility / 1000 : 10, // Convert m to km
+                    feelsLike: current.apparent_temperature != null ? Math.round(current.apparent_temperature) : Math.round(current.temperature_2m)
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch weather:", error);
+            setWeather(prev => ({ ...prev, loading: false, location: "Unavailable" }));
         }
     };
 
-    // Initial call
-    updateWeather();
+    const initWeather = async () => {
+        // Only set loading on first load, not during background refreshes
+        setWeather(prev => ({ ...prev, loading: prev.location === 'Locating...' }));
+        
+        try {
+            // Attempt 1: Browser Geolocation (GPS)
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
+            });
+            
+            await fetchWeatherForLocation(position.coords.latitude, position.coords.longitude);
+            
+        } catch (gpsError) {
+            console.warn("GPS failed or denied, trying IP geolocation...", gpsError);
+            
+            try {
+                // Attempt 2: IP Geolocation (ipwho.is is free and CORS friendly)
+                const ipRes = await fetch('https://ipwho.is/');
+                const ipData = await ipRes.json();
+                
+                if (ipData.success) {
+                    await fetchWeatherForLocation(ipData.latitude, ipData.longitude, ipData.city);
+                } else {
+                    throw new Error("IP Geolocation failed");
+                }
+            } catch (ipError) {
+                console.error("All location methods failed, defaulting to Kathmandu.", ipError);
+                // Attempt 3: Default (Kathmandu)
+                await fetchWeatherForLocation(27.7172, 85.3240, "Kathmandu");
+            }
+        }
+    };
 
-    // Update every 60 seconds to keep weather and location fresh
-    const intervalId = setInterval(updateWeather, 60000);
-
-    return () => clearInterval(intervalId);
+    initWeather();
+    
+    // Refresh every 1 minute (60000ms)
+    const interval = setInterval(initWeather, 60000);
+    return () => clearInterval(interval);
   }, []);
+
+  // --- AI Suggestion Engine ---
+  useEffect(() => {
+    const generateSmartSuggestion = () => {
+        if (weather.loading || weather.location === 'Locating...') return;
+
+        setIsAiLoading(true);
+
+        const timeout = setTimeout(() => {
+            let options: string[] = [];
+            const loc = weather.location.toLowerCase();
+            const isRaining = weather.code >= 51 && weather.code <= 67;
+            const isClear = weather.code <= 1;
+            const isNight = weather.isDay === 0;
+
+            // Simple Logic Tree
+            if (isRaining) {
+                options = ["Visit a local museum indoors.", "Find a cozy cafe nearby.", "Explore covered markets."];
+            } else if (isNight) {
+                options = ["Enjoy the local nightlife.", "Find a rooftop dinner spot.", "Take a peaceful evening walk."];
+            } else if (isClear) {
+                options = ["Great time for a scenic viewpoint.", "Perfect weather for a walk.", "Take some outdoor photos."];
+            } else {
+                options = ["Explore the city center.", "Visit popular local landmarks.", "Try local street food."];
+            }
+
+            // Add location context if known
+            if (loc.includes('kathmandu')) {
+                if (isClear) options.push("Visit Swayambhunath for the view.");
+                if (isNight) options.push("Thamel is lively right now.");
+            }
+
+            setAiSuggestion(options[Math.floor(Math.random() * options.length)]);
+            setIsAiLoading(false);
+        }, 1200);
+
+        return () => clearTimeout(timeout);
+    };
+
+    generateSmartSuggestion();
+  }, [weather.loading, weather.code, weather.isDay, weather.location]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -109,49 +185,49 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
           { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
       );
 
-      // 2. Welcome Card (Main Feature) with elastic pop
+      // 2. Welcome Card (Main Feature)
       tl.fromTo('.dash-welcome',
           { scale: 0.9, opacity: 0, y: 30 },
           { scale: 1, opacity: 1, y: 0, duration: 1, ease: 'elastic.out(1, 0.75)' },
           "-=0.6"
       );
 
-      // 3. Modern Text Reveal for Welcome Message
+      // 3. Text Reveal
       tl.fromTo('.reveal-text-char', 
           { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
           { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.03, duration: 1, ease: 'power4.out' },
           "-=0.5"
       );
 
-      // 4. Search Bar slide in
+      // 4. Search Bar
       tl.fromTo('.dash-search',
           { opacity: 0, x: -30 },
           { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' },
           "-=0.8"
       );
 
-      // 5. Tools Grid (Staggered with back bounce)
+      // 5. Tools Grid
       tl.fromTo('.dash-tool',
           { scale: 0.5, opacity: 0, y: 30 },
           { scale: 1, opacity: 1, y: 0, stagger: 0.08, duration: 0.6, ease: 'back.out(2)' },
           "-=0.4"
       );
 
-      // 6. Recommendations List (Staggered slide)
+      // 6. Recommendations
       tl.fromTo('.dash-rec',
           { x: 30, opacity: 0 },
           { x: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: 'power2.out' },
           "-=0.2"
       );
 
-      // 7. Bottom Nav (Mobile Only)
+      // 7. Mobile Nav
       tl.fromTo('.dash-nav-mobile',
           { y: 60, opacity: 0 },
           { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' },
           "-=0.6"
       );
       
-      // Continuous floating animation for the Sun/Weather Icon
+      // Floating Animations
       gsap.to('.weather-icon-anim', {
          y: -10,
          duration: 2,
@@ -233,15 +309,6 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
       
       // Fallback
       return <Cloud size={64} className="weather-icon-anim mb-2 text-gray-200 drop-shadow-md" />;
-  };
-
-  const getWeatherDescription = (code: number) => {
-      if (code === 0) return "Clear skies";
-      if (code === 1 || code === 2 || code === 3) return "Partly cloudy";
-      if (code >= 51 && code <= 67) return "Rainy";
-      if (code >= 71 && code <= 77) return "Snowy";
-      if (code >= 95) return "Thunderstorms";
-      return "Overcast";
   };
 
   return (
@@ -366,7 +433,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                    <div className="flex items-center gap-1.5 text-sky-100 mb-1">
                       <Eye size={14} className="opacity-80" /> <span className="text-xs font-bold uppercase tracking-wide opacity-80">Visibility</span>
                    </div>
-                   <div className="text-xl font-bold font-grotesk">{(weather.visibility / 1000).toFixed(1)} km</div>
+                   <div className="text-xl font-bold font-grotesk">{weather.visibility.toFixed(1)} km</div>
                </div>
                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex flex-col justify-center">
                    <div className="flex items-center gap-1.5 text-sky-100 mb-1">
@@ -378,11 +445,20 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
 
             <div className="mt-6 p-1 rounded-2xl bg-gradient-to-r from-white/20 to-white/5 backdrop-blur-md border border-white/20 hover:border-white/40 transition-colors cursor-pointer group/suggestion shadow-lg relative z-10">
                <div className="bg-black/5 rounded-[13px] p-4 flex items-center gap-4 hover:bg-black/10 transition-colors">
-                  <div className="p-3 bg-yellow-400 rounded-xl text-yellow-900 shadow-md shrink-0 group-hover/suggestion:scale-110 transition-transform duration-300"><Compass size={24} /></div>
+                  <div className="p-3 bg-yellow-400 rounded-xl text-yellow-900 shadow-md shrink-0 group-hover/suggestion:scale-110 transition-transform duration-300">
+                      {isAiLoading ? <BrainCircuit size={24} className="animate-pulse" /> : <Compass size={24} />}
+                  </div>
                   <div className="flex-grow">
-                    <div className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider text-sky-100 mb-1">AI Suggestion</div>
+                    <div className="text-xs font-bold flex items-center gap-2 uppercase tracking-wider text-sky-100 mb-1">
+                        AI Suggestion
+                        {isAiLoading && <Sparkles size={10} className="animate-spin text-sky-200" />}
+                    </div>
                     <div className="text-base text-white font-bold leading-tight">
-                        {weather.isDay === 0 ? "Explore the vibrant nightlife in Thamel." : "High visibility today. Check out the Nagarkot View Tower."}
+                        {isAiLoading ? (
+                            <span className="opacity-70 animate-pulse">Analyzing weather & time...</span>
+                        ) : (
+                            aiSuggestion || "Explore the vibrant streets of Thamel."
+                        )}
                     </div>
                   </div>
                   <div className="bg-white/20 p-2 rounded-full group-hover/suggestion:translate-x-1 transition-transform">

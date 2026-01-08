@@ -155,6 +155,30 @@ export default function App() {
   const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Request Permissions on App Start
+  useEffect(() => {
+    const requestPermissions = async () => {
+      // 1. Geolocation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => console.log("Location granted:", pos.coords),
+          (err) => console.warn("Location denied or error:", err)
+        );
+      }
+
+      // 2. Camera & Microphone
+      // Attempt to request media permissions. Note: Browsers may block this without user interaction.
+      try {
+        await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log("Camera and Microphone granted");
+      } catch (err) {
+        console.warn("Camera/Microphone denied or requires interaction:", err);
+      }
+    };
+
+    requestPermissions();
+  }, []);
+
   const handleNavigate = (page: string) => {
     setView(page as any);
   };

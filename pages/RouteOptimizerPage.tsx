@@ -61,49 +61,48 @@ const RouteOptimizerPage = ({ onNavigate }: { onNavigate: (page: string) => void
                 const lon = position.coords.longitude;
                 setMapCenter([lat, lon]);
 
+                let locationName = "My Current Location";
+
                 try {
                     // Reverse geocode to get address name
-                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
-                    const data = await res.json();
+                    const res = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+                        { headers: { 'Accept-Language': 'en' } }
+                    );
                     
-                    // Construct a friendly name
-                    let locationName = "My Current Location";
-                    if (data && data.address) {
-                        const addr = data.address;
-                        locationName = addr.amenity || addr.shop || addr.tourism || addr.building || 
-                                      `${addr.road || ''} ${addr.suburb || ''}`.trim() || 
-                                      addr.city || addr.town || "My Location";
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.address) {
+                            const addr = data.address;
+                            locationName = addr.amenity || addr.shop || addr.tourism || addr.building || 
+                                          `${addr.road || ''} ${addr.suburb || ''}`.trim() || 
+                                          addr.city || addr.town || "My Location";
+                        }
                     }
-
-                    setWaypoints(prev => {
-                        const newPoints = [...prev];
-                        newPoints[0] = {
-                            id: 1,
-                            location: locationName,
-                            coords: [lat, lon]
-                        };
-                        return newPoints;
-                    });
-
                 } catch (error) {
-                    console.error("Failed to fetch address:", error);
-                    // Fallback if network fails but GPS worked
-                    setWaypoints(prev => {
-                        const newPoints = [...prev];
-                        newPoints[0] = {
-                            id: 1,
-                            location: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
-                            coords: [lat, lon]
-                        };
-                        return newPoints;
-                    });
+                    console.error("Failed to fetch address name:", error);
+                    // Fallback using raw coords if name lookup fails
+                    locationName = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
                 }
+
+                setWaypoints(prev => {
+                    const newPoints = [...prev];
+                    newPoints[0] = {
+                        id: 1,
+                        location: locationName,
+                        coords: [lat, lon]
+                    };
+                    return newPoints;
+                });
             },
             (error) => {
                 console.warn("GPS access denied, using default location", error);
                 setWaypoints(prev => {
                     const newPoints = [...prev];
-                    newPoints[0] = MOCK_WAYPOINTS[0]; // Fallback to Thamel
+                    newPoints[0] = { 
+                        ...MOCK_WAYPOINTS[0],
+                        location: "Thamel (Default)" 
+                    };
                     return newPoints;
                 });
             },

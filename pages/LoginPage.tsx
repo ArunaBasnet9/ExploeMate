@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { ArrowRight, Compass, Eye, EyeOff, User, MapPin, AlertCircle, Sun, Moon, Cloud, CloudRain, CloudLightning, Snowflake, Wind, CloudDrizzle, CloudMoon, Droplets, Thermometer, Sparkles, Cpu } from 'lucide-react';
+import { ArrowRight, Compass, Eye, EyeOff, User, MapPin, AlertCircle, Sun, Moon, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, CloudMoon, Droplets, Thermometer, Sparkles, Cpu } from 'lucide-react';
 import { InputField } from '../components/SharedUI';
 import { LOGIN_IMAGES } from '../assets/images';
 
@@ -93,7 +93,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
     loading: true,
     humidity: 0,
     windSpeed: 0,
-    visibility: 10000,
+    visibility: 10,
     feelsLike: 0
   });
 
@@ -108,47 +108,63 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
 
   // Fetch Weather based on Geolocation - Updates Automatically
   useEffect(() => {
-    const updateWeather = () => {
-        const fetchWeatherData = async (lat: number, lon: number) => {
-            try {
-                const res = await fetch(
-                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,visibility,apparent_temperature&temperature_unit=celsius`
-                );
-                const data = await res.json();
-                setWeather({
-                    temp: Math.round(data.current.temperature_2m),
-                    code: data.current.weather_code,
-                    isDay: data.current.is_day,
-                    loading: false,
-                    humidity: data.current.relative_humidity_2m,
-                    windSpeed: data.current.wind_speed_10m,
-                    visibility: data.current.visibility,
-                    feelsLike: Math.round(data.current.apparent_temperature)
-                });
-            } catch (e) {
-                console.error("Weather fetch failed", e);
-                setWeather(prev => ({ ...prev, loading: false }));
-            }
-        };
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    fetchWeatherData(position.coords.latitude, position.coords.longitude);
-                },
-                (error) => {
-                    console.warn("Geolocation access denied or failed, defaulting to Kathmandu.", error);
-                    fetchWeatherData(27.7172, 85.3240);
-                },
-                { enableHighAccuracy: false, timeout: 5000, maximumAge: 0 }
+    const fetchWeatherForLocation = async (lat: number, lon: number) => {
+        try {
+            const res = await fetch(
+                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,relative_humidity_2m,wind_speed_10m,visibility,apparent_temperature&temperature_unit=celsius&wind_speed_unit=kmh`
             );
-        } else {
-            fetchWeatherData(27.7172, 85.3240);
+            
+            if (!res.ok) throw new Error("Weather Service Unavailable");
+            const data = await res.json();
+            
+            if (data && data.current) {
+                const current = data.current;
+                setWeather({
+                    temp: Math.round(current.temperature_2m),
+                    code: current.weather_code,
+                    isDay: current.is_day,
+                    loading: false,
+                    humidity: current.relative_humidity_2m ?? 0,
+                    windSpeed: current.wind_speed_10m ?? 0,
+                    visibility: current.visibility ? current.visibility / 1000 : 10, // km
+                    feelsLike: current.apparent_temperature != null ? Math.round(current.apparent_temperature) : Math.round(current.temperature_2m)
+                });
+            }
+        } catch (e) {
+            console.error("Weather fetch failed", e);
+            setWeather(prev => ({ ...prev, loading: false }));
         }
     };
 
-    updateWeather();
-    const intervalId = setInterval(updateWeather, 60000);
+    const initWeather = async () => {
+        setWeather(prev => ({ ...prev, loading: true }));
+        
+        try {
+            // Attempt 1: GPS
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
+            });
+            await fetchWeatherForLocation(position.coords.latitude, position.coords.longitude);
+        } catch (gpsError) {
+            try {
+                // Attempt 2: IP
+                const ipRes = await fetch('https://ipwho.is/');
+                const ipData = await ipRes.json();
+                if (ipData.success) {
+                    await fetchWeatherForLocation(ipData.latitude, ipData.longitude);
+                } else {
+                    throw new Error("IP Geo failed");
+                }
+            } catch (ipError) {
+                // Attempt 3: Default
+                await fetchWeatherForLocation(27.7172, 85.3240);
+            }
+        }
+    };
+
+    initWeather();
+    // Refresh weather every 1 minute
+    const intervalId = setInterval(initWeather, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -296,7 +312,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                            <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">
                                <Eye size={12} /> <span className="text-[10px] font-bold uppercase">Vis</span>
                            </div>
-                           <span className="text-sm font-bold">{(weather.visibility / 1000).toFixed(1)} km</span>
+                           <span className="text-sm font-bold">{weather.visibility.toFixed(1)} km</span>
                        </div>
                        <div className="flex flex-col">
                            <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">

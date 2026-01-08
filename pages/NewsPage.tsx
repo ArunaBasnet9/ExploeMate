@@ -64,7 +64,9 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
 
   // Fetch Weather for all cities
   const fetchAllWeather = async () => {
-    setLoadingWeather(true);
+    // Only show loading spinner on initial load, not background refreshes
+    if (weatherList.length === 0) setLoadingWeather(true);
+    
     try {
       const promises = NEPAL_CITIES.map(async (city) => {
         const res = await fetch(
@@ -165,6 +167,10 @@ const NewsPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => vo
   useEffect(() => {
     fetchAllWeather();
     fetchRealNews();
+    
+    // Auto-refresh weather every minute
+    const weatherInterval = setInterval(fetchAllWeather, 60000);
+    return () => clearInterval(weatherInterval);
   }, []);
 
   // Animations
