@@ -276,8 +276,8 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   const tools = [
     { icon: <MapPin className="text-white" size={20} />, label: "Route Optimizer", color: "bg-emerald-500", shadow: "shadow-emerald-500/30", action: () => onNavigate('route-optimizer') },
     { icon: <Languages className="text-white" size={20} />, label: "Translator", color: "bg-blue-500", shadow: "shadow-blue-500/30", action: () => onNavigate('translator') },
-    { icon: <QrCode className="text-white" size={20} />, label: "QR Guide", color: "bg-purple-500", shadow: "shadow-purple-500/30" },
-    { icon: <Users className="text-white" size={20} />, label: "Group Plan", color: "bg-orange-500", shadow: "shadow-orange-500/30" },
+    { icon: <QrCode className="text-white" size={20} />, label: "QR Guide", color: "bg-purple-500", shadow: "shadow-purple-500/30", action: () => onNavigate('qr-guide') },
+    { icon: <Users className="text-white" size={20} />, label: "Group Plan", color: "bg-orange-500", shadow: "shadow-orange-500/30", action: () => onNavigate('group-plan') },
   ];
 
   const navItems = [

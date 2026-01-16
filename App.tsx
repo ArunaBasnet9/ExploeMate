@@ -16,143 +16,193 @@ import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import RouteOptimizerPage from './pages/RouteOptimizerPage';
 import TranslatorPage from './pages/TranslatorPage';
+import QRGuidePage from './pages/QRGuidePage';
+import GroupPlanPage from './pages/GroupPlanPage';
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
+  const percentRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
-        onComplete: onComplete
+        onComplete: () => {
+            gsap.to(containerRef.current, {
+                yPercent: -100,
+                duration: 0.8,
+                ease: "power4.inOut",
+                onComplete
+            });
+        }
       });
 
-      // 0. Initial States
-      gsap.set(containerRef.current, { clipPath: "inset(0% 0% 0% 0%)" });
+      // --- Setup ---
+      const path = pathRef.current;
+      const length = path?.getTotalLength() || 0;
       
-      // 1. Draw Flight Path
-      if (pathRef.current) {
-        const length = pathRef.current.getTotalLength();
-        gsap.set(pathRef.current, { strokeDasharray: length, strokeDashoffset: length });
-        
-        tl.to(pathRef.current, {
-          strokeDashoffset: 0,
-          duration: 1.5,
-          ease: "power2.inOut"
-        });
-      }
+      gsap.set(path, { strokeDasharray: length, strokeDashoffset: length, opacity: 1 });
+      gsap.set(".splash-char", { y: 100, opacity: 0, rotateX: -90 });
+      gsap.set(".star", { opacity: 0, scale: 0 });
 
-      // 2. Plane Entrance (following the path visually)
-      tl.fromTo(planeRef.current,
-        { x: -100, y: 50, opacity: 0, scale: 0.5, rotation: -15 },
-        { x: 0, y: 0, opacity: 1, scale: 1, rotation: 0, duration: 1.2, ease: "back.out(1.7)" },
-        "-=1.0"
-      );
+      // --- Animation Sequence ---
 
-      // 3. Text Reveal (Masked Slide Up)
-      tl.fromTo(textRef.current?.children || [],
-        { y: 50, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 0.8, ease: "power3.out" },
-        "-=0.5"
-      );
-
-      // 4. Progress Bar (Without Text)
-      tl.to(progressRef.current, {
-        width: "100%",
+      // 0. Stars Twinkle
+      tl.to(".star", {
+        opacity: "random(0.3, 1)",
+        scale: "random(0.5, 1.5)",
         duration: 1.5,
-        ease: "expo.inOut"
-      }, "-=0.8");
-      
-      // 5. Exit Sequence (Cinematic Slide Up with Parallax)
-      // Move elements slightly down while container moves up
-      tl.to([planeRef.current, textRef.current], {
-        y: 100,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power2.in"
-      }, "+=0.2");
+        stagger: { amount: 1, from: "random" },
+        ease: "power1.out"
+      }, 0);
 
-      tl.to(containerRef.current, {
-        clipPath: "inset(0% 0% 100% 0%)",
-        duration: 1,
-        ease: "power4.inOut"
-      }, "-=0.6");
+      // 1. Draw Path & Move Plane
+      const progress = { value: 0 };
+      
+      tl.to(path, {
+          strokeDashoffset: 0,
+          duration: 2.5,
+          ease: "power2.inOut"
+      }, 0);
+
+      tl.to(progress, {
+          value: 1,
+          duration: 2.5,
+          ease: "power2.inOut",
+          onUpdate: () => {
+              if (path && planeRef.current) {
+                  // Get point at current progress
+                  const point = path.getPointAtLength(progress.value * length);
+                  
+                  // Calculate angle for rotation (look slightly ahead)
+                  const lookAhead = Math.min(progress.value * length + 1, length);
+                  const lookBehind = Math.max(0, progress.value * length - 1);
+                  const p1 = path.getPointAtLength(lookBehind);
+                  const p2 = path.getPointAtLength(lookAhead);
+                  
+                  const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+                  
+                  gsap.set(planeRef.current, {
+                      x: point.x,
+                      y: point.y,
+                      rotation: angle
+                  });
+              }
+              
+              if (percentRef.current) {
+                  percentRef.current.innerText = Math.round(progress.value * 100).toString();
+              }
+          }
+      }, 0);
+
+      // 2. Reveal Text (Staggered 3D flip)
+      tl.to(".splash-char", {
+          y: 0,
+          opacity: 1,
+          rotateX: 0,
+          stagger: 0.05,
+          duration: 0.8,
+          ease: "back.out(1.7)"
+      }, "-=1.5");
+
+      // 3. Pulse the plane at the end
+      tl.to(planeRef.current, {
+          scale: 1.5,
+          boxShadow: "0 0 60px rgba(14, 165, 233, 0.8)",
+          duration: 0.4,
+          yoyo: true,
+          repeat: 1,
+          ease: "sine.inOut"
+      });
 
     }, containerRef);
 
     return () => ctx.revert();
   }, [onComplete]);
 
+  const text = "ExploreMate";
+  const chars = text.split("").map((char, i) => (
+      <span key={i} className="splash-char inline-block origin-bottom font-display font-bold text-5xl md:text-7xl text-white drop-shadow-2xl">
+          {char}
+      </span>
+  ));
+
+  // Generate random stars
+  const stars = Array.from({ length: 30 }).map((_, i) => ({
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+  }));
+
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center text-white overflow-hidden">
-       {/* Background Aurora Effects */}
-       <div className="absolute inset-0 z-0">
-          <div className="absolute top-[-20%] left-[-20%] w-[80vw] h-[80vw] bg-sky-600/20 rounded-full blur-[100px] animate-float"></div>
-          <div className="absolute bottom-[-20%] right-[-20%] w-[80vw] h-[80vw] bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '-2s' }}></div>
-          {/* Grid Pattern */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
-       </div>
+    <div ref={containerRef} className="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center overflow-hidden">
+        {/* Animated Background Mesh */}
+        <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-sky-900/30 via-slate-950 to-slate-950 animate-[spin_60s_linear_infinite]"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] opacity-20"></div>
+        </div>
 
-       {/* SVG Path Background */}
-       <svg className="absolute inset-0 w-full h-full z-0 opacity-30 pointer-events-none">
-          <path 
-            ref={pathRef}
-            d="M -100,500 Q 400,200 800,500 T 2000,300" 
-            fill="none" 
-            stroke="url(#gradient)" 
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(14, 165, 233, 0)" />
-              <stop offset="50%" stopColor="#0ea5e9" />
-              <stop offset="100%" stopColor="rgba(14, 165, 233, 0)" />
-            </linearGradient>
-          </defs>
-       </svg>
+        {/* Stars */}
+        {stars.map((star, i) => (
+            <div key={i} className="star absolute w-1 h-1 bg-white rounded-full" style={{ top: star.top, left: star.left }}></div>
+        ))}
 
-       <div className="relative z-10 flex flex-col items-center w-full max-w-md px-6">
-          {/* Logo Container */}
-          <div ref={planeRef} className="relative mb-8">
-             <div className="absolute inset-0 bg-sky-500 blur-2xl opacity-20 rounded-full"></div>
-             <div className="w-24 h-24 bg-gradient-to-tr from-sky-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(14,165,233,0.4)] border border-white/20 relative z-10">
-                <Plane size={48} className="text-white transform -rotate-45" strokeWidth={1.5} />
-             </div>
-             {/* Decorative pin indicating destination */}
-             <div className="absolute -top-4 -right-4 bg-white text-sky-600 p-2 rounded-full shadow-lg animate-bounce">
-                <MapPin size={16} fill="currentColor" />
-             </div>
-          </div>
+        {/* Flight Path SVG */}
+        <svg className="absolute w-full h-full pointer-events-none opacity-60" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <linearGradient id="flightPathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(14, 165, 233, 0)" />
+                    <stop offset="50%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="rgba(255, 255, 255, 0.8)" />
+                </linearGradient>
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+            {/* Dynamic S-Curve Path */}
+            <path 
+                ref={pathRef}
+                d="M -100,500 C 300,500 400,100 600,100 S 900,300 1200,200"
+                fill="none" 
+                stroke="url(#flightPathGradient)" 
+                strokeWidth="3"
+                strokeLinecap="round"
+                filter="url(#glow)"
+            />
+        </svg>
 
-          {/* Text Container */}
-          <div ref={textRef} className="text-center mb-12">
-             <h1 className="text-5xl md:text-6xl font-display font-bold tracking-tight mb-2">
-               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-white via-sky-100 to-sky-300">Explore</span>
-               <span className="inline-block text-sky-500">Mate</span>
-             </h1>
-             <p className="text-slate-400 font-medium tracking-widest text-sm uppercase">
-               AI-Powered Travel Companion
-             </p>
-          </div>
+        {/* Plane Object */}
+        <div ref={planeRef} className="absolute top-0 left-0 -ml-10 -mt-10 w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.6)] z-20">
+            {/* Rotate inner icon -45deg so it points right (0deg) by default to match path calculation */}
+            <Plane className="text-sky-600 transform -rotate-45" size={40} strokeWidth={2.5} />
+        </div>
 
-          {/* Loading System - Minimalist Bar */}
-          <div className="w-full relative mt-4 px-8">
-             <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                <div ref={progressRef} className="h-full bg-gradient-to-r from-sky-400 to-blue-600 w-0 rounded-full shadow-[0_0_20px_rgba(56,189,248,0.5)]"></div>
-             </div>
-          </div>
-       </div>
+        {/* Center Content */}
+        <div className="relative z-10 flex flex-col items-center">
+            <div className="flex space-x-1 mb-6 overflow-hidden perspective-text">
+                {chars}
+            </div>
+            
+            <div className="flex items-center gap-4 text-sky-400 font-mono text-sm tracking-[0.2em] uppercase backdrop-blur-sm px-4 py-2 rounded-full border border-sky-900/50 bg-slate-900/30">
+                <div className="w-8 h-[1px] bg-sky-500/50"></div>
+                <div className="flex items-center gap-2">
+                    <span className="animate-pulse">Loading System</span>
+                    <span className="font-bold text-white"><span ref={percentRef}>0</span>%</span>
+                </div>
+                <div className="w-8 h-[1px] bg-sky-500/50"></div>
+            </div>
+        </div>
     </div>
   );
 };
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator' | 'qr-guide' | 'group-plan'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Request Permissions on App Start
@@ -220,6 +270,10 @@ export default function App() {
         return <RouteOptimizerPage onNavigate={handleNavigate} />;
       case 'translator':
         return <TranslatorPage onNavigate={handleNavigate} />;
+      case 'qr-guide':
+        return <QRGuidePage onNavigate={handleNavigate} />;
+      case 'group-plan':
+        return <GroupPlanPage onNavigate={handleNavigate} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'faq':
