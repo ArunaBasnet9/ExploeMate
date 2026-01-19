@@ -207,12 +207,12 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                 
                 {/* SVG Ring System */}
                 <svg className="w-full h-full transform -rotate-90">
-                    {/* Background Track */}
+                    {/* Background Track - Subtle Fade */}
                     <circle
                         cx="32"
                         cy="32"
                         r="22"
-                        stroke="rgba(255, 255, 255, 0.1)"
+                        stroke="rgba(255, 255, 255, 0.05)"
                         strokeWidth="4"
                         fill="none"
                     />
@@ -229,11 +229,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                         className="drop-shadow-[0_0_8px_rgba(14,165,233,0.8)]"
                     />
                 </svg>
-                
-                {/* Center Dot */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_white]"></div>
-                </div>
+                {/* Removed inner white spinner and dot as requested */}
             </div>
         </div>
     </div>
