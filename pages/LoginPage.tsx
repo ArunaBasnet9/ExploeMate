@@ -1,71 +1,81 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { ArrowRight, Compass, Eye, EyeOff, User, MapPin, AlertCircle, Sun, Moon, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, CloudMoon, Droplets, Thermometer, Sparkles, Cpu } from 'lucide-react';
+import { ArrowRight, Compass, Eye, EyeOff, User, MapPin, AlertCircle, Sun, Moon, Cloud, CloudRain, Snowflake, CloudLightning, Wind, CloudDrizzle, CloudMoon, Droplets, Thermometer, Sparkles, Cpu, ScanLine, Globe, Zap } from 'lucide-react';
 import { InputField } from '../components/SharedUI';
 import { LOGIN_IMAGES } from '../assets/images';
 
-// Nepal Specific Slides for Login
+// Updated Slides to reflect "Tourist Guide System" features
 const LOGIN_SLIDES = [
   {
     id: 1,
     image: LOGIN_IMAGES.EVEREST,
-    title: "Sagarmatha Calling",
+    title: "AI Itinerary Planner",
     location: "Mt. Everest, Solukhumbu",
-    description: "Stand at the top of the world and breathe in the Himalayas."
+    description: "Our machine learning engine generates personalized daily plans based on your budget, duration, and interests."
   },
   {
     id: 2,
     image: LOGIN_IMAGES.BOUDHANATH,
-    title: "Spiritual Harmony",
+    title: "QR Local Guide",
     location: "Boudhanath, Kathmandu",
-    description: "Find your inner peace amidst the ancient chants and prayer flags."
+    description: "Scan QR codes at heritage sites to instantly access history, audio guides, and nearby attractions."
   },
   {
     id: 3,
     image: LOGIN_IMAGES.POKHARA,
-    title: "Lakeside Serenity",
+    title: "Smart Route Optimizer",
     location: "Phewa Lake, Pokhara",
-    description: "Witness the reflection of Machhapuchhre on the tranquil waters."
+    description: "Navigate with confidence using our OpenStreetMap integration for the best routes and travel times."
   }
 ];
 
-// --- AI Text Scramble Component ---
-const ScrambleTitle = ({ text, className }: { text: string, className?: string }) => {
+// --- Advanced Text Decoding Animation ---
+const DecodingText = ({ text, className }: { text: string, className?: string }) => {
   const elementRef = useRef<HTMLHeadingElement>(null);
   
   useEffect(() => {
     const el = elementRef.current;
     if (!el) return;
     
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-    const duration = 2;
+    // Split text into spans for individual character control
+    const chars = text.split('');
+    el.innerHTML = chars.map(char => `<span class="char" style="opacity:0; display:inline-block;">${char === ' ' ? '&nbsp;' : char}</span>`).join('');
     
-    gsap.set(el, { opacity: 1 });
+    const charElements = el.querySelectorAll('.char');
+    const decodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
     
-    let progress = { value: 0 };
-    gsap.to(progress, {
-        value: 1,
-        duration: duration,
-        ease: "power4.out",
-        onUpdate: () => {
-            const p = progress.value;
-            const revealLength = Math.floor(text.length * p);
-            const revealed = text.substring(0, revealLength);
-            const scrambledLength = text.length - revealLength;
-            let scrambled = "";
-            for (let i = 0; i < scrambledLength; i++) {
-                scrambled += chars[Math.floor(Math.random() * chars.length)];
-            }
-            el.innerText = revealed + scrambled;
-        },
-        onComplete: () => {
-            el.innerText = text; 
+    const tl = gsap.timeline();
+    
+    tl.to(charElements, {
+        duration: 0.8,
+        opacity: 1,
+        stagger: 0.05,
+        ease: "power2.out",
+        onUpdate: function() {
+            // Randomly scramble characters that are not yet fully settled (hacky visual effect)
+            const progress = this.progress();
+            charElements.forEach((charEl, i) => {
+                if (progress < (i / chars.length) + 0.1 && Math.random() > 0.5) {
+                    if (chars[i] !== ' ') {
+                        charEl.textContent = decodeChars[Math.floor(Math.random() * decodeChars.length)];
+                    }
+                } else {
+                    charEl.textContent = chars[i];
+                }
+            });
         }
+    });
+    
+    // Ensure final state is clean
+    tl.to(charElements, {
+        textContent: (i: number) => chars[i],
+        duration: 0,
+        immediateRender: false
     });
 
   }, [text]);
 
-  return <h1 ref={elementRef} className={className} style={{ opacity: 0 }}>{text}</h1>;
+  return <h1 ref={elementRef} className={className} aria-label={text}></h1>;
 };
 
 interface WeatherData {
@@ -172,7 +182,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % LOGIN_SLIDES.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
@@ -208,11 +218,11 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
   useEffect(() => {
       if (weatherRef.current) {
           if (isWeatherExpanded) {
-              gsap.to(weatherRef.current, { width: 280, height: 160, borderRadius: '1.5rem', backgroundColor: '#ffffff', duration: 0.4, ease: 'power2.out' });
-              gsap.to('.weather-details', { opacity: 1, y: 0, duration: 0.3, delay: 0.1 });
+              gsap.to(weatherRef.current, { width: 280, height: 170, borderRadius: '1.5rem', backgroundColor: '#ffffff', duration: 0.4, ease: 'power2.out' });
+              gsap.to('.weather-details', { opacity: 1, y: 0, duration: 0.3, delay: 0.1, display: 'grid' });
           } else {
               gsap.to(weatherRef.current, { width: 'auto', height: 48, borderRadius: '9999px', backgroundColor: '#f8fafc', duration: 0.4, ease: 'power2.inOut' });
-              gsap.to('.weather-details', { opacity: 0, y: 10, duration: 0.2 });
+              gsap.to('.weather-details', { opacity: 0, y: 10, duration: 0.2, display: 'none' });
           }
       }
   }, [isWeatherExpanded]);
@@ -295,7 +305,10 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                        </div>
                    </div>
 
-                   <div className="weather-details opacity-0 w-full mt-4 grid grid-cols-2 gap-3 text-slate-600">
+                   <div className="weather-details hidden opacity-0 w-full mt-4 grid-cols-2 gap-3 text-slate-600">
+                       <div className="col-span-2 text-[10px] text-sky-600 font-bold uppercase tracking-wide text-center bg-sky-50 rounded-md py-1">
+                          AI Weather Optimized
+                       </div>
                        <div className="flex flex-col">
                            <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">
                                <Droplets size={12} /> <span className="text-[10px] font-bold uppercase">Humidity</span>
@@ -328,17 +341,17 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
           <div className="max-w-sm mx-auto w-full relative z-10 mt-12 md:mt-0">
             <div className="mb-12">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 text-sky-600 font-bold text-xs uppercase tracking-wider mb-6 border border-sky-100 animate-pulse">
-                <Cpu size={14} /> AI-Powered Access
+                <Cpu size={14} /> Tourist Guide System
               </div>
               
-              {/* AI Scramble Title */}
-              <ScrambleTitle 
-                text="Namaste, Explorer" 
-                className="text-5xl font-grotesk font-bold text-slate-900 mb-3 tracking-tight leading-tight" 
+              {/* Decoding Title Animation */}
+              <DecodingText 
+                text="Welcome to ExploreMate" 
+                className="text-5xl font-grotesk font-bold text-slate-900 mb-3 tracking-tight leading-tight min-h-[1.2em]" 
               />
               
               <p className="text-slate-500 font-medium text-lg">
-                Your intelligent journey through the Himalayas begins here.
+                Your intelligent companion for personalized trips, real-time updates, and smart exploration.
               </p>
             </div>
 
@@ -377,7 +390,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                   </div>
                   <span>Remember me</span>
                 </label>
-                <button type="button" className="text-sky-600 hover:text-sky-700 hover:underline">Forgot Password?</button>
+                <button type="button" onClick={() => onNavigate('forgot-password')} className="text-sky-600 hover:text-sky-700 hover:underline">Forgot Password?</button>
               </div>
 
               {error && (
@@ -392,14 +405,14 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                 className={`w-full py-4 bg-sky-900 text-white rounded-2xl font-bold font-grotesk tracking-wide hover:bg-sky-800 transition-all duration-300 shadow-xl shadow-sky-900/20 flex items-center justify-center gap-2 group overflow-hidden relative ${isLoading ? 'cursor-not-allowed opacity-90' : 'hover:scale-[1.02] active:scale-[0.98]'}`}
               >
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <span>{isLoading ? 'Authenticating...' : 'Log In'}</span>
+                <span>{isLoading ? 'Accessing System...' : 'Log In'}</span>
                 {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
               </button>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-slate-400 text-sm font-medium">
-                New to ExploreMate? <button onClick={() => onNavigate('signup')} className="font-bold text-sky-600 hover:text-sky-700 hover:underline">Create Account</button>
+                New to the system? <button onClick={() => onNavigate('signup')} className="font-bold text-sky-600 hover:text-sky-700 hover:underline">Create Account</button>
               </p>
             </div>
             
@@ -428,10 +441,14 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                 alt={slide.title} 
                 className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-linear"
                 style={{ transform: index === currentSlide ? 'scale(1.1)' : 'scale(1.0)' }}
+                onError={(e) => {
+                    // Fallback if image fails
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=1200";
+                }}
               />
               {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/10 to-transparent"></div>
-              <div className="absolute inset-0 bg-sky-900/20 mix-blend-overlay"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-sky-900/10 mix-blend-overlay"></div>
             </div>
           ))}
 
@@ -446,9 +463,31 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                   <h2 className="text-4xl lg:text-6xl font-display font-bold text-white mb-4 leading-tight">
                     {slide.title}
                   </h2>
-                  <p className="text-slate-300 text-lg max-w-md leading-relaxed backdrop-blur-sm bg-black/10 p-2 rounded-lg">
+                  <div className="text-slate-200 text-lg max-w-lg leading-relaxed backdrop-blur-md bg-white/10 p-4 rounded-2xl border border-white/10 shadow-lg">
                     {slide.description}
-                  </p>
+                  </div>
+                  
+                  {/* Feature Icons Row based on slide context */}
+                  <div className="flex gap-4 mt-6">
+                     {index === 0 && (
+                        <>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><Sparkles size={14}/> AI Planner</div>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><Zap size={14}/> Fast</div>
+                        </>
+                     )}
+                     {index === 1 && (
+                        <>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><ScanLine size={14}/> QR Scan</div>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><Globe size={14}/> History</div>
+                        </>
+                     )}
+                     {index === 2 && (
+                        <>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><Compass size={14}/> Navigation</div>
+                           <div className="flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-lg text-xs font-bold text-white"><User size={14}/> Groups</div>
+                        </>
+                     )}
+                  </div>
                 </div>
                )
             ))}
@@ -467,7 +506,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
             </div>
           </div>
           
-          {/* Decorative Weather Overlay Element */}
+          {/* Decorative Weather Overlay Element (Rain/Snow effect) */}
           {weather.code >= 51 && weather.code <= 67 && (
              <div className="absolute inset-0 pointer-events-none bg-[url('https://cdn.pixabay.com/animation/2023/06/25/19/27/rain-8088037_1280.gif')] opacity-20 mix-blend-screen bg-cover"></div>
           )}

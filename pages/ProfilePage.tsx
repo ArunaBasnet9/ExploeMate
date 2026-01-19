@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { User, MapPin, Settings, Camera, Edit2, LogOut, Mail, Globe, Shield, Bell, CreditCard, Compass, Mountain, Calendar, Check, Plane, Phone, Users, DollarSign, ChevronDown } from 'lucide-react';
+import { User, MapPin, Settings, Camera, Edit2, LogOut, Mail, Globe, Shield, Bell, CreditCard, Compass, Mountain, Calendar, Check, Plane, Phone, Users, DollarSign, ChevronDown, X, Save } from 'lucide-react';
+import { InputField } from '../components/SharedUI';
 
 const CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
@@ -17,11 +18,37 @@ const CURRENCIES = [
   { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
 ];
 
+const AVAILABLE_INTERESTS = ["Hiking", "Photography", "Foodie", "History", "Art", "Nightlife", "Luxury", "Budget"];
+
 const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigate: (page: string) => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'preferences' | 'account'>('preferences');
   const [isEditing, setIsEditing] = useState(false);
   const [currency, setCurrency] = useState('USD');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  
+  // Profile Data State
+  const [userProfile, setUserProfile] = useState({
+    name: "Rashoj Ban",
+    title: "Digital Nomad",
+    location: "Kathmandu, Nepal",
+    email: "rashojban@gmail.com",
+    phone: "+977 9800000000",
+    nationality: "Nepal",
+    interests: ["Hiking", "Photography", "Foodie"],
+    budget: 50, // 0 to 100 representing range
+    travelStyle: "Solo"
+  });
+
+  // Image State
+  // Using reliable Unsplash images for defaults
+  const [profileImage, setProfileImage] = useState("https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=300&h=300");
+  const [coverImage, setCoverImage] = useState("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1200");
+  
+  // Refs
+  const passwordModalRef = useRef<HTMLDivElement>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // Animation setup
   useEffect(() => {
@@ -39,12 +66,14 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
           "-=0.5"
       );
       
-      // Modern Text Reveal inside card
-      tl.fromTo('.reveal-text-char', 
-          { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
-          { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' },
-          "-=0.5"
-      );
+      // Modern Text Reveal inside card (Only run if not editing to avoid input mess)
+      if (!isEditing) {
+        tl.fromTo('.reveal-text-char', 
+            { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+            { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out' },
+            "-=0.5"
+        );
+      }
 
       tl.fromTo('.profile-content',
           { y: 20, opacity: 0 },
@@ -63,6 +92,16 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
     return () => ctx.revert();
   }, []);
 
+  // Modal Animation
+  useEffect(() => {
+      if(isPasswordModalOpen && passwordModalRef.current) {
+          gsap.fromTo(passwordModalRef.current,
+              { scale: 0.9, opacity: 0, y: 20 },
+              { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.5)' }
+          );
+      }
+  }, [isPasswordModalOpen]);
+
   const splitText = (text: string) => {
     return text.split('').map((char, index) => (
       <span key={index} className="reveal-text-char inline-block whitespace-pre origin-bottom will-change-transform">
@@ -71,14 +110,46 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
     ));
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'profile' | 'cover') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'profile') {
+          setProfileImage(reader.result as string);
+        } else {
+          setCoverImage(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveProfile = () => {
+      setIsEditing(false);
+      // Simulate API Save
+      gsap.to('.save-feedback', { opacity: 1, y: -10, duration: 0.5, onComplete: () => {
+          setTimeout(() => gsap.to('.save-feedback', { opacity: 0, y: 0 }), 2000);
+      }});
+  };
+
+  const toggleInterest = (interest: string) => {
+      if (!isEditing) return;
+      
+      setUserProfile(prev => ({
+          ...prev,
+          interests: prev.interests.includes(interest)
+             ? prev.interests.filter(i => i !== interest)
+             : [...prev.interests, interest]
+      }));
+  };
+
   const navItems = [
     { label: 'Explore', icon: Compass, page: 'dashboard' },
     { label: 'Saved', icon: Mountain, page: 'saved' },
     { label: 'Trips', icon: Calendar, page: 'trips' },
     { label: 'Profile', icon: User, page: 'profile' }
   ];
-
-  const interests = ["Hiking", "Photography", "Foodie", "History", "Art", "Nightlife", "Luxury", "Budget"];
 
   return (
     <div ref={containerRef} className="relative w-full min-h-screen p-4 pb-24 md:p-8 flex flex-col items-center bg-slate-50/50">
@@ -130,43 +201,103 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
         {/* Profile Header Card */}
         <div className="profile-card bg-white rounded-[2.5rem] shadow-xl border border-white/60 overflow-hidden relative">
            {/* Cover Image */}
-           <div className="h-48 w-full bg-gradient-to-r from-sky-400 to-blue-600 relative overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=1200" alt="Cover" className="w-full h-full object-cover opacity-50 mix-blend-overlay" />
-              <button className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors">
+           <div className="h-48 w-full relative overflow-hidden bg-slate-200">
+              <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10"></div>
+              
+              <button 
+                onClick={() => coverInputRef.current?.click()}
+                className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors z-10"
+              >
                  <Camera size={18} />
               </button>
+              <input 
+                type="file" 
+                ref={coverInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e, 'cover')}
+              />
            </div>
            
            <div className="px-8 pb-8">
               <div className="flex flex-col md:flex-row items-start md:items-end -mt-16 mb-6 gap-6">
                  {/* Avatar */}
-                 <div className="relative group">
+                 <div className="relative group z-10">
                     <div className="w-32 h-32 rounded-[2rem] p-1 bg-white shadow-lg">
-                       <img src="https://i.pravatar.cc/150?img=32" alt="Profile" className="w-full h-full rounded-[1.8rem] object-cover" />
+                       <img src={profileImage} alt="Profile" className="w-full h-full rounded-[1.8rem] object-cover" />
                     </div>
-                    <button className="absolute bottom-2 right-2 p-2 bg-sky-600 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                    <button 
+                        onClick={() => profileInputRef.current?.click()}
+                        className="absolute bottom-2 right-2 p-2 bg-sky-600 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100 z-20"
+                    >
                        <Edit2 size={14} />
                     </button>
+                    <input 
+                        type="file" 
+                        ref={profileInputRef} 
+                        className="hidden" 
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'profile')}
+                    />
                  </div>
                  
-                 <div className="flex-grow pt-2 md:pt-0">
-                    <h1 className="text-3xl font-display font-bold text-slate-900 overflow-hidden">
-                        {splitText("Rashoj Ban")}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-4 text-slate-500 mt-1 font-medium">
-                       <span className="flex items-center gap-1"><MapPin size={16} /> Kathmandu, Nepal</span>
-                       <span className="flex items-center gap-1"><Globe size={16} /> Digital Nomad</span>
-                       <span className="text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide">Premium Member</span>
-                    </div>
+                 <div className="flex-grow pt-2 md:pt-0 w-full">
+                    {isEditing ? (
+                        <div className="space-y-3 mt-4 md:mt-0">
+                            <input 
+                                type="text" 
+                                value={userProfile.name}
+                                onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+                                className="w-full text-3xl font-display font-bold text-slate-900 border-b-2 border-sky-200 outline-none bg-transparent focus:border-sky-500 placeholder-slate-300"
+                                placeholder="Your Name"
+                            />
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <input 
+                                    type="text" 
+                                    value={userProfile.location}
+                                    onChange={(e) => setUserProfile({...userProfile, location: e.target.value})}
+                                    className="text-sm font-medium text-slate-500 border-b border-slate-200 outline-none bg-transparent focus:border-sky-400 w-full sm:w-auto"
+                                    placeholder="City, Country"
+                                />
+                                <input 
+                                    type="text" 
+                                    value={userProfile.title}
+                                    onChange={(e) => setUserProfile({...userProfile, title: e.target.value})}
+                                    className="text-sm font-medium text-slate-500 border-b border-slate-200 outline-none bg-transparent focus:border-sky-400 w-full sm:w-auto"
+                                    placeholder="Your Title"
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="text-3xl font-display font-bold text-slate-900 overflow-hidden">
+                                {splitText(userProfile.name)}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-4 text-slate-500 mt-1 font-medium">
+                                <span className="flex items-center gap-1"><MapPin size={16} /> {userProfile.location}</span>
+                                <span className="flex items-center gap-1"><Globe size={16} /> {userProfile.title}</span>
+                                <span className="text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wide">Premium Member</span>
+                            </div>
+                        </>
+                    )}
                  </div>
 
-                 <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
-                    <button onClick={() => setIsEditing(!isEditing)} className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm border ${isEditing ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300'}`}>
-                       {isEditing ? 'Save Changes' : 'Edit Profile'}
+                 <div className="flex gap-3 w-full md:w-auto mt-4 md:mt-0 relative">
+                    <button 
+                        onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)} 
+                        className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm border flex items-center justify-center gap-2 ${isEditing ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800' : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300'}`}
+                    >
+                       {isEditing ? <><Save size={18} /> Save</> : <><Edit2 size={18} /> Edit Profile</>}
                     </button>
                     <button className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-300 transition-all">
                        <Settings size={20} />
                     </button>
+                    
+                    {/* Save Feedback */}
+                    <div className="save-feedback absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg opacity-0 pointer-events-none whitespace-nowrap flex items-center gap-1">
+                        <Check size={12} /> Profile Updated!
+                    </div>
                  </div>
               </div>
               
@@ -218,21 +349,25 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
                        <Compass size={20} className="text-sky-500" /> Travel Interests
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                       {interests.map((interest) => (
+                       {AVAILABLE_INTERESTS.map((interest) => (
                           <button 
                              key={interest}
+                             onClick={() => toggleInterest(interest)}
+                             disabled={!isEditing}
                              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                                ['Hiking', 'Photography', 'Foodie'].includes(interest) 
+                                userProfile.interests.includes(interest) 
                                    ? 'bg-sky-100 text-sky-700 border border-sky-200' 
                                    : 'bg-slate-50 text-slate-500 border border-slate-100 hover:bg-white hover:border-slate-300'
-                             }`}
+                             } ${isEditing ? 'cursor-pointer hover:scale-105' : 'cursor-default opacity-80'}`}
                           >
                              {interest}
                           </button>
                        ))}
-                       <button className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-dashed border-slate-300 text-slate-400 hover:text-sky-600 hover:border-sky-300 transition-all">
-                          + Add
-                       </button>
+                       {isEditing && (
+                           <button className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-dashed border-slate-300 text-slate-400 hover:text-sky-600 hover:border-sky-300 transition-all">
+                              + Add
+                           </button>
+                       )}
                     </div>
                  </div>
 
@@ -242,12 +377,25 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                           <CreditCard size={20} className="text-emerald-500" /> Budget Range
                        </h3>
-                       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-500 w-2/3 rounded-full"></div>
+                       <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative">
+                          <div 
+                            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                            style={{ width: `${userProfile.budget}%` }}
+                          ></div>
+                          {isEditing && (
+                              <input 
+                                type="range" 
+                                min="0" 
+                                max="100" 
+                                value={userProfile.budget} 
+                                onChange={(e) => setUserProfile({...userProfile, budget: parseInt(e.target.value)})}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              />
+                          )}
                        </div>
                        <div className="flex justify-between mt-2 text-xs font-bold text-slate-400">
                           <span>Budget</span>
-                          <span className="text-emerald-600">Moderate ($100-$300/day)</span>
+                          <span className="text-emerald-600">{userProfile.budget > 66 ? 'Luxury' : (userProfile.budget > 33 ? 'Moderate' : 'Budget')} (${userProfile.budget * 5}-{userProfile.budget * 10}/day)</span>
                           <span>Luxury</span>
                        </div>
                     </div>
@@ -257,9 +405,19 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
                           <Users size={20} className="text-purple-500" /> Travel Companions
                        </h3>
                        <div className="flex gap-2">
-                          <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg text-sm font-bold">Solo</span>
-                          <span className="px-3 py-1 bg-white border border-slate-200 text-slate-500 rounded-lg text-sm font-bold opacity-50">Couple</span>
-                          <span className="px-3 py-1 bg-white border border-slate-200 text-slate-500 rounded-lg text-sm font-bold opacity-50">Group</span>
+                          {['Solo', 'Couple', 'Group'].map(style => (
+                              <button 
+                                key={style}
+                                onClick={() => isEditing && setUserProfile({...userProfile, travelStyle: style})}
+                                className={`px-3 py-1 rounded-lg text-sm font-bold transition-all ${
+                                    userProfile.travelStyle === style 
+                                    ? 'bg-purple-50 text-purple-700' 
+                                    : 'bg-white border border-slate-200 text-slate-500 opacity-50 hover:opacity-100'
+                                }`}
+                              >
+                                {style}
+                              </button>
+                          ))}
                        </div>
                     </div>
                  </div>
@@ -271,14 +429,34 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
                        <h3 className="text-lg font-bold text-slate-900 mb-2">Personal Information</h3>
                        <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 font-medium">
-                             <Mail size={18} className="text-slate-400" /> rashojban@gmail.com
+                          <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'bg-white border-sky-300 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                             <Mail size={18} className="text-slate-400" /> 
+                             {isEditing ? (
+                                <input 
+                                    type="email" 
+                                    value={userProfile.email}
+                                    onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
+                                    className="bg-transparent outline-none w-full text-slate-700 font-medium"
+                                />
+                             ) : (
+                                <span className="text-slate-700 font-medium">{userProfile.email}</span>
+                             )}
                           </div>
                        </div>
                        <div className="space-y-1">
                           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
-                          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 font-medium">
-                             <Phone size={18} className="text-slate-400" /> +1 (555) 123-4567
+                          <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isEditing ? 'bg-white border-sky-300 shadow-sm' : 'bg-slate-50 border-slate-100'}`}>
+                             <Phone size={18} className="text-slate-400" />
+                             {isEditing ? (
+                                <input 
+                                    type="tel" 
+                                    value={userProfile.phone}
+                                    onChange={(e) => setUserProfile({...userProfile, phone: e.target.value})}
+                                    className="bg-transparent outline-none w-full text-slate-700 font-medium"
+                                />
+                             ) : (
+                                <span className="text-slate-700 font-medium">{userProfile.phone}</span>
+                             )}
                           </div>
                        </div>
 
@@ -294,7 +472,8 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
                                  <select 
                                     value={currency}
                                     onChange={(e) => setCurrency(e.target.value)}
-                                    className="w-full pl-12 pr-10 py-4 bg-slate-50 rounded-xl border border-slate-100 text-slate-700 font-medium appearance-none outline-none focus:border-sky-500 focus:bg-white focus:shadow-[0_10px_30px_-10px_rgba(14,165,233,0.2)] transition-all cursor-pointer"
+                                    disabled={!isEditing}
+                                    className={`w-full pl-12 pr-10 py-4 rounded-xl border text-slate-700 font-medium appearance-none outline-none transition-all cursor-pointer ${isEditing ? 'bg-white border-sky-300 focus:shadow-md' : 'bg-slate-50 border-slate-100'}`}
                                  >
                                     {CURRENCIES.map((c) => (
                                        <option key={c.code} value={c.code}>
@@ -312,7 +491,10 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
 
                     <div className="space-y-4">
                        <h3 className="text-lg font-bold text-slate-900 mb-2">Security & Privacy</h3>
-                       <button className="w-full flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-sky-300 group transition-all">
+                       <button 
+                        onClick={() => setIsPasswordModalOpen(true)}
+                        className="w-full flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-sky-300 group transition-all"
+                       >
                           <div className="flex items-center gap-3">
                              <div className="p-2 bg-sky-50 text-sky-600 rounded-lg group-hover:bg-sky-600 group-hover:text-white transition-colors">
                                 <Shield size={18} />
@@ -349,6 +531,39 @@ const ProfilePage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavigat
         </div>
 
       </div>
+
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+              <div ref={passwordModalRef} className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 relative">
+                  <button onClick={() => setIsPasswordModalOpen(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-50 rounded-full">
+                      <X size={24} />
+                  </button>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-6 font-display">Change Password</h2>
+                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsPasswordModalOpen(false); }}>
+                      <InputField label="Current Password" type="password" placeholder="••••••••" required />
+                      <InputField label="New Password" type="password" placeholder="••••••••" required />
+                      <InputField label="Confirm New Password" type="password" placeholder="••••••••" required />
+                      
+                      <div className="pt-4 flex gap-3">
+                          <button 
+                            type="button" 
+                            onClick={() => setIsPasswordModalOpen(false)}
+                            className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                            type="submit" 
+                            className="flex-1 py-3 bg-sky-600 text-white font-bold rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-600/20 transition-all active:scale-95"
+                          >
+                              Update
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
 
       {/* Bottom Nav (Mobile Only) */}
       <div className="dash-nav-mobile md:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-tr from-sky-600 via-blue-600 to-sky-700 backdrop-blur-xl border border-white/20 py-4 px-8 rounded-2xl shadow-xl shadow-sky-900/20 z-50 flex items-center justify-between ring-1 ring-white/20">

@@ -443,7 +443,10 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                </div>
             </div>
 
-            <div className="mt-6 p-1 rounded-2xl bg-gradient-to-r from-white/20 to-white/5 backdrop-blur-md border border-white/20 hover:border-white/40 transition-colors cursor-pointer group/suggestion shadow-lg relative z-10">
+            <div 
+                className="mt-6 p-1 rounded-2xl bg-gradient-to-r from-white/20 to-white/5 backdrop-blur-md border border-white/20 hover:border-white/40 transition-colors cursor-pointer group/suggestion shadow-lg relative z-10"
+                onClick={() => onNavigate('ai-suggestion')}
+            >
                <div className="bg-black/5 rounded-[13px] p-4 flex items-center gap-4 hover:bg-black/10 transition-colors">
                   <div className="p-3 bg-yellow-400 rounded-xl text-yellow-900 shadow-md shrink-0 group-hover/suggestion:scale-110 transition-transform duration-300">
                       {isAiLoading ? <BrainCircuit size={24} className="animate-pulse" /> : <Compass size={24} />}

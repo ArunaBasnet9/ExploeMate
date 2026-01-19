@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { gsap } from 'gsap';
-import { Calendar, MapPin, Clock, MoreVertical, Plus, Users, ArrowRight, Plane, CheckCircle2, AlertCircle, Compass, Mountain, User, Bell } from 'lucide-react';
+import { Calendar, MapPin, Clock, MoreVertical, Plus, Users, ArrowRight, Plane, CheckCircle2, AlertCircle, Compass, Mountain, User, Bell, X } from 'lucide-react';
 
-const TRIPS = [
+const INITIAL_TRIPS = [
   {
     id: 1,
     status: 'upcoming',
@@ -49,7 +49,7 @@ const TRIPS = [
   }
 ];
 
-const TripCard: React.FC<{ trip: typeof TRIPS[number] }> = ({ trip }) => {
+const TripCard: React.FC<{ trip: any }> = ({ trip }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const onHover = (enter: boolean) => {
@@ -119,7 +119,7 @@ const TripCard: React.FC<{ trip: typeof TRIPS[number] }> = ({ trip }) => {
                 <div className="flex items-center -space-x-2">
                     {trip.collaborators.length > 0 ? (
                         <>
-                            {trip.collaborators.map((img, i) => (
+                            {trip.collaborators.map((img: string, i: number) => (
                                 <div key={i} className="w-8 h-8 rounded-full border-2 border-white relative z-0 hover:z-10 hover:scale-110 transition-transform">
                                     <img src={img} alt="User" className="w-full h-full rounded-full object-cover" />
                                 </div>
@@ -146,9 +146,14 @@ const TripCard: React.FC<{ trip: typeof TRIPS[number] }> = ({ trip }) => {
 
 const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void, onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'draft'>('upcoming');
+  const [trips, setTrips] = useState(INITIAL_TRIPS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newTrip, setNewTrip] = useState({ title: '', location: '', startDate: '', endDate: '' });
+  
   const containerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  const filteredTrips = TRIPS.filter(trip => {
+  const filteredTrips = trips.filter(trip => {
       if (activeTab === 'upcoming') return trip.status === 'upcoming';
       if (activeTab === 'past') return trip.status === 'past';
       return trip.status === 'draft';
@@ -187,6 +192,41 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         );
       }
   }, [activeTab]);
+
+  useEffect(() => {
+      if (isModalOpen && modalRef.current) {
+          gsap.fromTo(modalRef.current,
+              { scale: 0.9, opacity: 0, y: 20 },
+              { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.5)' }
+          );
+      }
+  }, [isModalOpen]);
+
+  const handleCreateTrip = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      const start = new Date(newTrip.startDate);
+      const today = new Date();
+      const diffTime = Math.abs(start.getTime() - today.getTime());
+      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+      const createdTrip = {
+          id: Date.now(),
+          status: 'upcoming',
+          title: newTrip.title,
+          location: newTrip.location,
+          startDate: newTrip.startDate,
+          endDate: newTrip.endDate,
+          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800", // Generic Travel Image
+          collaborators: [],
+          daysLeft: daysLeft
+      };
+
+      setTrips([createdTrip, ...trips]);
+      setIsModalOpen(false);
+      setNewTrip({ title: '', location: '', startDate: '', endDate: '' });
+      setActiveTab('upcoming');
+  };
 
   const splitText = (text: string) => {
     return text.split('').map((char, index) => (
@@ -265,7 +305,10 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                 </p>
             </div>
             
-            <button className="trips-header-anim px-6 py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-600/20 hover:scale-105 active:scale-95 duration-200 flex items-center gap-2">
+            <button 
+                onClick={() => setIsModalOpen(true)}
+                className="trips-header-anim px-6 py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-600/20 hover:scale-105 active:scale-95 duration-200 flex items-center gap-2"
+            >
                 <Plus size={20} /> Create New Trip
             </button>
         </div>
@@ -303,13 +346,96 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">No {activeTab} trips found</h3>
                     <p className="text-slate-500 max-w-xs mx-auto mb-8">Ready to explore somewhere new? Start planning your next adventure today.</p>
-                    <button className="text-sky-600 font-bold hover:underline">Plan a trip now</button>
+                    <button onClick={() => setIsModalOpen(true)} className="text-sky-600 font-bold hover:underline">Plan a trip now</button>
                 </div>
             )}
         </div>
 
       </div>
       
+      {/* Create Trip Modal */}
+      {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+              <div ref={modalRef} className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative">
+                  <button 
+                    onClick={() => setIsModalOpen(false)}
+                    className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                      <X size={20} />
+                  </button>
+                  
+                  <h2 className="text-2xl font-bold font-display text-slate-900 mb-1">Plan New Adventure</h2>
+                  <p className="text-slate-500 text-sm mb-6">Where are you heading next?</p>
+                  
+                  <form onSubmit={handleCreateTrip} className="space-y-4">
+                      <div>
+                          <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Trip Title</label>
+                          <input 
+                            type="text" 
+                            required
+                            value={newTrip.title}
+                            onChange={(e) => setNewTrip({...newTrip, title: e.target.value})}
+                            placeholder="e.g. Summer in Bali" 
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium"
+                          />
+                      </div>
+                      <div>
+                          <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Destination</label>
+                          <div className="relative">
+                              <input 
+                                type="text" 
+                                required
+                                value={newTrip.location}
+                                onChange={(e) => setNewTrip({...newTrip, location: e.target.value})}
+                                placeholder="e.g. Ubud, Indonesia" 
+                                className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium"
+                              />
+                              <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div>
+                              <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Start Date</label>
+                              <input 
+                                type="date" 
+                                required
+                                value={newTrip.startDate}
+                                onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-600"
+                              />
+                          </div>
+                          <div>
+                              <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">End Date</label>
+                              <input 
+                                type="date" 
+                                required
+                                value={newTrip.endDate}
+                                onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-600"
+                              />
+                          </div>
+                      </div>
+                      
+                      <div className="pt-4 flex gap-3">
+                          <button 
+                            type="button"
+                            onClick={() => setIsModalOpen(false)}
+                            className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors"
+                          >
+                              Cancel
+                          </button>
+                          <button 
+                            type="submit"
+                            className="flex-1 py-3 bg-sky-600 text-white font-bold rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-600/20 transition-all active:scale-95"
+                          >
+                              Create Trip
+                          </button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      )}
+
       {/* Bottom Nav (Mobile Only) */}
       <div className="dash-nav-mobile md:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-tr from-sky-600 via-blue-600 to-sky-700 backdrop-blur-xl border border-white/20 py-4 px-8 rounded-2xl shadow-xl shadow-sky-900/20 z-50 flex items-center justify-between ring-1 ring-white/20">
         {navItems.map((item, i) => {

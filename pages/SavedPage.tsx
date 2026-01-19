@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { gsap } from 'gsap';
-import { Trash2, MapPin, Calendar, ArrowRight, Heart, BookOpen, Plane, Grid, Compass, Mountain, User, Bell } from 'lucide-react';
+import { Trash2, MapPin, Calendar, ArrowRight, Heart, BookOpen, Plane, Grid, Compass, Mountain, User, Bell, X, Share2, Clock, Star, DollarSign, ExternalLink } from 'lucide-react';
 
 const SAVED_ITEMS = [
   {
@@ -11,7 +11,8 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=800',
     dateAdded: '2 days ago',
     rating: 4.9,
-    price: '$1,200'
+    price: '$1,200',
+    description: "Immerse yourself in the tranquility of Kyoto's historic temples. Experience traditional tea ceremonies, walk through the iconic Fushimi Inari shrines, and witness the breathtaking cherry blossoms in spring. This destination offers a perfect blend of spiritual heritage and natural beauty."
   },
   {
     id: 2,
@@ -21,7 +22,8 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&q=80&w=800',
     dateAdded: '1 week ago',
     stops: 5,
-    budget: '$$$'
+    budget: '$$$',
+    description: "A comprehensive tour through the highlights of Western Europe. Starting in Paris, moving through the Swiss Alps, and ending in the coastal towns of Italy. Perfect for first-time travelers wanting to see the classics."
   },
   {
     id: 3,
@@ -31,7 +33,8 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1585970281220-41834220b3c6?auto=format&fit=crop&q=80&w=800',
     dateAdded: '2 weeks ago',
     readTime: '9 min',
-    tag: 'Adventure'
+    tag: 'Adventure',
+    description: "Beyond Everest Base Camp lies a world of untouched valleys and ancient monasteries. Discover the trekking routes less traveled, where local culture remains untouched by mass tourism."
   },
   {
     id: 4,
@@ -41,7 +44,8 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1613395877344-13d4c79e4284?auto=format&fit=crop&q=80&w=800',
     dateAdded: '3 weeks ago',
     rating: 4.8,
-    price: '$2,400'
+    price: '$2,400',
+    description: "Famous for its stunning sunsets and white-washed buildings, Santorini is the jewel of the Aegean Sea. Explore volcanic beaches, ancient vineyards, and luxury cliffside resorts."
   },
   {
     id: 5,
@@ -51,7 +55,8 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&q=80&w=800',
     dateAdded: '1 month ago',
     stops: 12,
-    budget: '$$'
+    budget: '$$',
+    description: "A culinary journey through Tokyo's most vibrant districts. From early morning sushi at Tsukiji Outer Market to late-night ramen in Shinjuku, taste the best of Japanese cuisine."
   },
   {
     id: 6,
@@ -61,14 +66,17 @@ const SAVED_ITEMS = [
     image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800',
     dateAdded: '1 month ago',
     readTime: '6 min',
-    tag: 'Lifestyle'
+    tag: 'Lifestyle',
+    description: "Looking to take your office on the road? We explore the best co-working spaces, cafes, and living arrangements in Bali for the modern remote worker."
   }
 ];
 
 const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void, onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedItem, setSelectedItem] = useState<typeof SAVED_ITEMS[0] | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const filteredItems = activeFilter === 'all' 
     ? SAVED_ITEMS 
@@ -124,6 +132,16 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         );
     }
   }, [activeFilter]);
+
+  // Modal Animation
+  useEffect(() => {
+      if (selectedItem && modalRef.current) {
+          gsap.fromTo(modalRef.current,
+              { opacity: 0, scale: 0.9, y: 20 },
+              { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: 'back.out(1.2)' }
+          );
+      }
+  }, [selectedItem]);
 
   const splitText = (text: string) => {
     return text.split('').map((char, index) => (
@@ -264,6 +282,7 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                         className="saved-grid-item group bg-white rounded-[2.5rem] p-4 shadow-sm border border-slate-100 flex flex-col h-full cursor-pointer relative overflow-hidden"
                         onMouseEnter={(e) => onCardHover(e, true)}
                         onMouseLeave={(e) => onCardHover(e, false)}
+                        onClick={() => setSelectedItem(item)}
                     >
                         <div className="relative h-64 rounded-[2rem] overflow-hidden mb-5">
                             <img src={item.image} alt={item.title} className="card-img w-full h-full object-cover transition-transform duration-700" />
@@ -334,6 +353,95 @@ const SavedPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
             )}
         </div>
       </div>
+
+      {/* Item Detail Modal */}
+      {selectedItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md transition-opacity">
+              <div 
+                ref={modalRef}
+                className="bg-white w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col"
+              >
+                  <button 
+                    onClick={() => setSelectedItem(null)}
+                    className="absolute top-4 right-4 z-10 p-2 bg-black/20 text-white rounded-full backdrop-blur-md hover:bg-black/40 transition-colors"
+                  >
+                      <X size={24} />
+                  </button>
+
+                  <div className="relative h-64 sm:h-80 shrink-0">
+                      <img src={selectedItem.image} alt={selectedItem.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-6 left-8 text-white">
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-wider mb-3 border border-white/20">
+                              {getIcon(selectedItem.type)} {getLabel(selectedItem.type)}
+                          </div>
+                          <h2 className="text-3xl sm:text-4xl font-display font-bold">{selectedItem.title}</h2>
+                      </div>
+                  </div>
+
+                  <div className="p-8 overflow-y-auto">
+                      <div className="flex flex-wrap gap-4 mb-8 text-sm">
+                          {selectedItem.type === 'destination' && (
+                              <>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <MapPin size={16} className="text-sky-500" /> {selectedItem.location}
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <Star size={16} className="text-orange-400 fill-orange-400" /> {selectedItem.rating}
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <DollarSign size={16} className="text-emerald-500" /> {selectedItem.price}
+                                  </span>
+                              </>
+                          )}
+                          {selectedItem.type === 'itinerary' && (
+                              <>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <Calendar size={16} className="text-purple-500" /> {selectedItem.duration}
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <MapPin size={16} className="text-sky-500" /> {selectedItem.stops} Stops
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <DollarSign size={16} className="text-emerald-500" /> {selectedItem.budget}
+                                  </span>
+                              </>
+                          )}
+                          {selectedItem.type === 'article' && (
+                              <>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <User size={16} className="text-sky-500" /> {selectedItem.author}
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <Clock size={16} className="text-orange-500" /> {selectedItem.readTime}
+                                  </span>
+                                  <span className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl font-bold text-slate-700">
+                                      <BookOpen size={16} className="text-purple-500" /> {selectedItem.tag}
+                                  </span>
+                              </>
+                          )}
+                      </div>
+
+                      <div className="prose prose-slate max-w-none mb-8">
+                          <h3 className="text-xl font-bold text-slate-900 mb-2">About this {getLabel(selectedItem.type).toLowerCase()}</h3>
+                          <p className="text-slate-600 leading-relaxed text-lg">
+                              {selectedItem.description}
+                          </p>
+                      </div>
+
+                      <div className="flex gap-4 border-t border-slate-100 pt-6">
+                          <button className="flex-1 py-4 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2">
+                              {selectedItem.type === 'destination' ? 'Plan a Trip Here' : (selectedItem.type === 'itinerary' ? 'Use Template' : 'Read Article')} 
+                              <ArrowRight size={20} />
+                          </button>
+                          <button className="p-4 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors border border-slate-200">
+                              <Share2 size={24} />
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      )}
       
       {/* Bottom Nav (Mobile Only) */}
       <div className="dash-nav-mobile md:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-tr from-sky-600 via-blue-600 to-sky-700 backdrop-blur-xl border border-white/20 py-4 px-8 rounded-2xl shadow-xl shadow-sky-900/20 z-50 flex items-center justify-between ring-1 ring-white/20">

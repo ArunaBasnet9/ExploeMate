@@ -8,6 +8,7 @@ import NewsPage from './pages/NewsPage';
 import FAQPage from './pages/FAQPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import FeaturesPage from './pages/FeaturesPage';
 import SavedPage from './pages/SavedPage';
@@ -18,6 +19,7 @@ import RouteOptimizerPage from './pages/RouteOptimizerPage';
 import TranslatorPage from './pages/TranslatorPage';
 import QRGuidePage from './pages/QRGuidePage';
 import GroupPlanPage from './pages/GroupPlanPage';
+import AISuggestionPage from './pages/AISuggestionPage';
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -202,7 +204,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator' | 'qr-guide' | 'group-plan'>('landing');
+  const [view, setView] = useState<'landing' | 'login' | 'signup' | 'forgot-password' | 'dashboard' | 'about' | 'faq' | 'news' | 'features' | 'saved' | 'trips' | 'profile' | 'notifications' | 'route-optimizer' | 'translator' | 'qr-guide' | 'group-plan' | 'ai-suggestion'>('landing');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Request Permissions on App Start
@@ -256,6 +258,8 @@ export default function App() {
         return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
       case 'signup':
         return <SignupPage onSignup={handleSignup} onNavigate={handleNavigate} />;
+      case 'forgot-password':
+        return <ForgotPasswordPage onNavigate={handleNavigate} />;
       case 'dashboard':
         return <DashboardPage onLogout={handleLogout} onNavigate={handleNavigate} />;
       case 'saved':
@@ -274,6 +278,8 @@ export default function App() {
         return <QRGuidePage onNavigate={handleNavigate} />;
       case 'group-plan':
         return <GroupPlanPage onNavigate={handleNavigate} />;
+      case 'ai-suggestion':
+        return <AISuggestionPage onNavigate={handleNavigate} />;
       case 'about':
         return <AboutPage onNavigate={handleNavigate} isLoggedIn={isLoggedIn} />;
       case 'faq':
