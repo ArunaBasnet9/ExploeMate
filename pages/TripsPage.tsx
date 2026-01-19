@@ -1,6 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { gsap } from 'gsap';
-import { Calendar, MapPin, Clock, MoreVertical, Plus, Users, ArrowRight, Plane, CheckCircle2, AlertCircle, Compass, Mountain, User, Bell, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, MoreVertical, Plus, Users, ArrowRight, Plane, CheckCircle2, AlertCircle, Compass, Mountain, User, Bell, X, ChevronLeft, Utensils, Camera, Share2, Edit2, Trash2, Coffee, Sun } from 'lucide-react';
+import { LOGIN_IMAGES, SIGNUP_IMAGES } from '../assets/images';
+
+const NEPAL_DESTINATIONS = [
+  { name: "Kathmandu", image: LOGIN_IMAGES.BOUDHANATH },
+  { name: "Pokhara", image: LOGIN_IMAGES.POKHARA },
+  { name: "Everest Base Camp", image: LOGIN_IMAGES.EVEREST },
+  { name: "Annapurna Circuit", image: SIGNUP_IMAGES.ANNAPURNA },
+  { name: "Bhaktapur", image: SIGNUP_IMAGES.BHAKTAPUR },
+  { name: "Chitwan National Park", image: SIGNUP_IMAGES.CHITWAN },
+  { name: "Lumbini", image: "https://images.unsplash.com/photo-1570702172793-27b32c21943d?auto=format&fit=crop&q=80&w=800" },
+  { name: "Nagarkot", image: LOGIN_IMAGES.EVEREST }, 
+  { name: "Mustang", image: SIGNUP_IMAGES.ANNAPURNA },
+  { name: "Rara Lake", image: LOGIN_IMAGES.POKHARA },
+  { name: "Bandipur", image: SIGNUP_IMAGES.BHAKTAPUR },
+  { name: "Gosaikunda", image: LOGIN_IMAGES.POKHARA },
+  { name: "Patan", image: LOGIN_IMAGES.BOUDHANATH },
+  { name: "Swayambhunath", image: LOGIN_IMAGES.BOUDHANATH }
+];
 
 const INITIAL_TRIPS = [
   {
@@ -49,7 +67,29 @@ const INITIAL_TRIPS = [
   }
 ];
 
-const TripCard: React.FC<{ trip: any }> = ({ trip }) => {
+// Mock Data for Itinerary Details
+const MOCK_ITINERARY_DAYS = [
+    {
+        day: 1,
+        title: "Arrival & Settlement",
+        activities: [
+            { id: 101, time: "10:00 AM", title: "Arrival at Airport", type: "transport", icon: Plane, desc: "Private transfer to hotel arranged." },
+            { id: 102, time: "01:00 PM", title: "Check-in & Rest", type: "stay", icon: Calendar, desc: "Relax and freshen up." },
+            { id: 103, time: "06:00 PM", title: "Welcome Dinner", type: "food", icon: Utensils, desc: "Traditional cuisine at The Golden Spoon." }
+        ]
+    },
+    {
+        day: 2,
+        title: "Cultural Exploration",
+        activities: [
+            { id: 201, time: "08:00 AM", title: "Breakfast at Cafe", type: "food", icon: Coffee, desc: "Start the day with local coffee." },
+            { id: 202, time: "10:00 AM", title: "City Heritage Tour", type: "activity", icon: MapPin, desc: "Guided tour of the old city and temples." },
+            { id: 203, time: "04:00 PM", title: "Sunset Viewpoint", type: "nature", icon: Sun, desc: "Best views from the hilltop observatory." }
+        ]
+    }
+];
+
+const TripCard: React.FC<{ trip: any; onClick: () => void }> = ({ trip, onClick }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const onHover = (enter: boolean) => {
@@ -67,6 +107,7 @@ const TripCard: React.FC<{ trip: any }> = ({ trip }) => {
   return (
     <div 
         ref={cardRef}
+        onClick={onClick}
         className="group bg-white rounded-[2.5rem] p-3 shadow-sm border border-slate-100 flex flex-col md:flex-row gap-6 hover:border-sky-100 transition-colors cursor-pointer overflow-hidden trip-card-anim"
         onMouseEnter={() => onHover(true)}
         onMouseLeave={() => onHover(false)}
@@ -81,8 +122,8 @@ const TripCard: React.FC<{ trip: any }> = ({ trip }) => {
                     </div>
                 )}
                 {trip.status === 'draft' && (
-                    <div className="bg-slate-800/80 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
-                        <AlertCircle size={12} /> Draft
+                    <div className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
+                        <AlertCircle size={12} /> Pending
                     </div>
                 )}
                 {trip.status === 'past' && (
@@ -144,11 +185,141 @@ const TripCard: React.FC<{ trip: any }> = ({ trip }) => {
   );
 };
 
+// --- Trip Detail / Itinerary View Component ---
+const TripDetailView = ({ trip, onBack, onDelete }: { trip: any, onBack: () => void, onDelete: (id: number) => void }) => {
+    const headerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const tl = gsap.timeline();
+        tl.fromTo(headerRef.current, 
+            { y: -50, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+        );
+        tl.fromTo('.day-card', 
+            { y: 50, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: 'power3.out' },
+            "-=0.4"
+        );
+    }, []);
+
+    return (
+        <div className="w-full min-h-[80vh] bg-white rounded-[3rem] overflow-hidden shadow-sm border border-slate-100 relative">
+            {/* Hero Header */}
+            <div ref={headerRef} className="relative h-72 md:h-96">
+                <img src={trip.image} alt={trip.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                
+                <button 
+                    onClick={onBack}
+                    className="absolute top-6 left-6 p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/40 transition-colors z-20"
+                >
+                    <ChevronLeft size={24} />
+                </button>
+
+                <div className="absolute top-6 right-6 flex gap-3 z-20">
+                    <button className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/40 transition-colors">
+                        <Share2 size={20} />
+                    </button>
+                    <button className="p-3 bg-white/20 backdrop-blur-md text-white rounded-full hover:bg-white/40 transition-colors">
+                        <Edit2 size={20} />
+                    </button>
+                </div>
+
+                <div className="absolute bottom-8 left-8 right-8 text-white">
+                    <div className="flex flex-wrap gap-3 mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md border border-white/20 flex items-center gap-1.5 ${
+                            trip.status === 'upcoming' ? 'bg-sky-500/80' : 
+                            trip.status === 'past' ? 'bg-emerald-500/80' : 'bg-amber-500/80'
+                        }`}>
+                            {trip.status === 'upcoming' && <Clock size={12} />}
+                            {trip.status === 'past' && <CheckCircle2 size={12} />}
+                            {trip.status === 'draft' && <AlertCircle size={12} />}
+                            {trip.status === 'draft' ? 'Pending' : (trip.status === 'past' ? 'Completed' : 'Upcoming')}
+                        </span>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md border border-white/20 flex items-center gap-1.5">
+                            <MapPin size={12} /> {trip.location}
+                        </span>
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-display font-bold leading-tight mb-2">{trip.title}</h1>
+                    <div className="flex items-center gap-2 text-slate-200 font-medium">
+                        <Calendar size={16} /> {trip.startDate === 'TBD' ? 'Date TBD' : `${trip.startDate} - ${trip.endDate}`}
+                    </div>
+                </div>
+            </div>
+
+            {/* Itinerary Content */}
+            <div ref={contentRef} className="p-6 md:p-10 bg-slate-50 min-h-[500px]">
+                <div className="max-w-4xl mx-auto">
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-2xl font-bold text-slate-900 font-display">Itinerary</h2>
+                        {trip.status === 'draft' && (
+                            <button className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-xl font-bold text-sm hover:bg-sky-700 transition-colors shadow-lg shadow-sky-600/20">
+                                <Plus size={16} /> Add Activity
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="space-y-8 relative">
+                        {/* Timeline Line */}
+                        <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-slate-200 md:left-8"></div>
+
+                        {MOCK_ITINERARY_DAYS.map((day, i) => (
+                            <div key={i} className="day-card relative pl-12 md:pl-20">
+                                {/* Day Marker */}
+                                <div className="absolute left-0 md:left-4 top-0 w-8 h-8 rounded-full bg-white border-4 border-sky-200 flex items-center justify-center font-bold text-xs text-sky-700 z-10 shadow-sm">
+                                    {day.day}
+                                </div>
+                                
+                                <div className="mb-4">
+                                    <h3 className="text-lg font-bold text-slate-900">{day.title}</h3>
+                                    <p className="text-sm text-slate-500">Day {day.day}</p>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {day.activities.map((act) => (
+                                        <div key={act.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex items-start gap-4 group">
+                                            <div className="p-3 bg-slate-50 rounded-xl text-slate-500 group-hover:text-sky-600 group-hover:bg-sky-50 transition-colors">
+                                                <act.icon size={20} />
+                                            </div>
+                                            <div className="flex-grow">
+                                                <div className="flex justify-between items-start">
+                                                    <h4 className="font-bold text-slate-800 text-sm">{act.title}</h4>
+                                                    <span className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-md">{act.time}</span>
+                                                </div>
+                                                <p className="text-sm text-slate-500 mt-1">{act.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="mt-12 pt-8 border-t border-slate-200 flex justify-center">
+                        <button 
+                            onClick={() => onDelete(trip.id)}
+                            className="text-red-500 font-bold text-sm flex items-center gap-2 hover:bg-red-50 px-4 py-2 rounded-xl transition-colors"
+                        >
+                            <Trash2 size={16} /> Delete Trip
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void, onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'draft'>('upcoming');
   const [trips, setTrips] = useState(INITIAL_TRIPS);
+  const [selectedTrip, setSelectedTrip] = useState<any | null>(null);
+  
+  // Create Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTrip, setNewTrip] = useState({ title: '', location: '', startDate: '', endDate: '' });
+  const [suggestions, setSuggestions] = useState<typeof NEPAL_DESTINATIONS>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -160,38 +331,37 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
   });
 
   useEffect(() => {
-    // Header & Mobile Nav Animations
-    const tl = gsap.timeline();
-    tl.fromTo('.dash-header', 
-        { y: -30, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
-    );
-    
-    // Modern Text Reveal
-    tl.fromTo('.reveal-text-char', 
-        { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
-        { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out', delay: 0.2 }
-    );
-
-    tl.fromTo('.trips-header-anim',
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.3 }
-    );
-    tl.fromTo('.dash-nav-mobile',
-        { y: 60, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 0.6 }
-    );
-  }, []);
+    if (!selectedTrip) {
+        // Only run main page animations if we are not in detail view
+        const tl = gsap.timeline();
+        tl.fromTo('.dash-header', 
+            { y: -30, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+        );
+        tl.fromTo('.reveal-text-char', 
+            { y: 50, opacity: 0, skewY: 10, rotateZ: 5 },
+            { y: 0, opacity: 1, skewY: 0, rotateZ: 0, stagger: 0.02, duration: 1, ease: 'power4.out', delay: 0.2 }
+        );
+        tl.fromTo('.trips-header-anim',
+            { y: 30, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power3.out', delay: 0.3 }
+        );
+        tl.fromTo('.dash-nav-mobile',
+            { y: 60, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 0.6 }
+        );
+    }
+  }, [selectedTrip]);
 
   useEffect(() => {
       // List Animation on Tab Change
-      if (containerRef.current) {
+      if (containerRef.current && !selectedTrip) {
         gsap.fromTo(containerRef.current.children,
             { y: 50, opacity: 0 },
             { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power2.out', clearProps: 'all' }
         );
       }
-  }, [activeTab]);
+  }, [activeTab, selectedTrip]);
 
   useEffect(() => {
       if (isModalOpen && modalRef.current) {
@@ -202,22 +372,60 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
       }
   }, [isModalOpen]);
 
-  const handleCreateTrip = (e: React.FormEvent) => {
-      e.preventDefault();
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewTrip({ ...newTrip, location: value });
+    
+    if (value.trim()) {
+        const filtered = NEPAL_DESTINATIONS.filter(dest => 
+            dest.name.toLowerCase().includes(value.toLowerCase())
+        );
+        setSuggestions(filtered);
+        setShowSuggestions(true);
+    } else {
+        setSuggestions(NEPAL_DESTINATIONS);
+    }
+  };
+
+  const handleSelectSuggestion = (dest: typeof NEPAL_DESTINATIONS[0]) => {
+    setNewTrip({ ...newTrip, location: dest.name });
+    setShowSuggestions(false);
+  };
+
+  const handleDeleteTrip = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this trip?")) {
+        setTrips(prev => prev.filter(t => t.id !== id));
+        setSelectedTrip(null);
+    }
+  };
+
+  const handleCreateTrip = (e: React.FormEvent | null, status: 'upcoming' | 'draft' = 'upcoming') => {
+      if (e) e.preventDefault();
       
-      const start = new Date(newTrip.startDate);
+      // Basic validation for confirmed trips
+      if (status === 'upcoming' && (!newTrip.startDate || !newTrip.endDate)) {
+          alert("Please select start and end dates for an upcoming trip.");
+          return;
+      }
+
+      const isTBD = !newTrip.startDate || !newTrip.endDate;
+      const start = newTrip.startDate ? new Date(newTrip.startDate) : new Date();
       const today = new Date();
       const diffTime = Math.abs(start.getTime() - today.getTime());
-      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      const daysLeft = isTBD ? null : Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+      const matchingDest = NEPAL_DESTINATIONS.find(d => d.name === newTrip.location) 
+        || NEPAL_DESTINATIONS.find(d => newTrip.location.toLowerCase().includes(d.name.toLowerCase()))
+        || NEPAL_DESTINATIONS[0];
 
       const createdTrip = {
           id: Date.now(),
-          status: 'upcoming',
-          title: newTrip.title,
-          location: newTrip.location,
-          startDate: newTrip.startDate,
-          endDate: newTrip.endDate,
-          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800", // Generic Travel Image
+          status: status,
+          title: newTrip.title || "Untitled Trip",
+          location: newTrip.location || "Unknown Destination",
+          startDate: newTrip.startDate || 'TBD',
+          endDate: newTrip.endDate || 'TBD',
+          image: matchingDest.image,
           collaborators: [],
           daysLeft: daysLeft
       };
@@ -225,7 +433,7 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
       setTrips([createdTrip, ...trips]);
       setIsModalOpen(false);
       setNewTrip({ title: '', location: '', startDate: '', endDate: '' });
-      setActiveTab('upcoming');
+      setActiveTab(status === 'draft' ? 'draft' : 'upcoming');
   };
 
   const splitText = (text: string) => {
@@ -290,73 +498,97 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
         </div>
       </div>
       
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="w-full max-w-5xl z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-            <div>
-                <div className="trips-header-anim inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider shadow-sm mb-4">
-                    <Plane size={14} className="text-sky-500" /> Travel Log
-                </div>
-                <h1 className="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-2 tracking-tight overflow-hidden">
-                    {splitText("My Adventures")}
-                </h1>
-                <p className="trips-header-anim text-slate-500 text-lg">
-                    Manage your itineraries and look back on past journeys.
-                </p>
-            </div>
-            
-            <button 
-                onClick={() => setIsModalOpen(true)}
-                className="trips-header-anim px-6 py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-600/20 hover:scale-105 active:scale-95 duration-200 flex items-center gap-2"
-            >
-                <Plus size={20} /> Create New Trip
-            </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="trips-header-anim border-b border-slate-200 mb-8 flex gap-8">
-            {['upcoming', 'draft', 'past'].map((tab) => (
-                <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as any)}
-                    className={`pb-4 text-sm font-bold uppercase tracking-wider transition-all relative ${
-                        activeTab === tab 
-                        ? 'text-sky-600' 
-                        : 'text-slate-400 hover:text-slate-600'
-                    }`}
-                >
-                    {tab} Trips
-                    {activeTab === tab && (
-                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 rounded-t-full"></div>
-                    )}
-                </button>
-            ))}
-        </div>
-
-        {/* Trips List */}
-        <div ref={containerRef} className="space-y-6 min-h-[400px]">
-            {filteredTrips.length > 0 ? (
-                filteredTrips.map((trip) => (
-                    <TripCard key={trip.id} trip={trip} />
-                ))
-            ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-white/50">
-                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-6">
-                        <Plane size={32} />
+        
+        {/* Conditional Rendering: List vs Detail */}
+        {selectedTrip ? (
+            <TripDetailView 
+                trip={selectedTrip} 
+                onBack={() => setSelectedTrip(null)} 
+                onDelete={handleDeleteTrip}
+            />
+        ) : (
+            <>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <div className="trips-header-anim inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-wider shadow-sm mb-4">
+                            <Plane size={14} className="text-sky-500" /> Travel Log
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-2 tracking-tight overflow-hidden">
+                            {splitText("My Adventures")}
+                        </h1>
+                        <p className="trips-header-anim text-slate-500 text-lg">
+                            Manage your itineraries and look back on past journeys.
+                        </p>
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">No {activeTab} trips found</h3>
-                    <p className="text-slate-500 max-w-xs mx-auto mb-8">Ready to explore somewhere new? Start planning your next adventure today.</p>
-                    <button onClick={() => setIsModalOpen(true)} className="text-sky-600 font-bold hover:underline">Plan a trip now</button>
+                    
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="trips-header-anim px-6 py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition-all shadow-lg shadow-sky-600/20 hover:scale-105 active:scale-95 duration-200 flex items-center gap-2"
+                    >
+                        <Plus size={20} /> Create New Trip
+                    </button>
                 </div>
-            )}
-        </div>
+
+                {/* Tabs */}
+                <div className="trips-header-anim border-b border-slate-200 mb-8 flex gap-8">
+                    {[
+                        { id: 'upcoming', label: 'Upcoming' },
+                        { id: 'draft', label: 'Pending' },
+                        { id: 'past', label: 'Completed' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`pb-4 text-sm font-bold uppercase tracking-wider transition-all relative ${
+                                activeTab === tab.id 
+                                ? 'text-sky-600' 
+                                : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            {tab.label}
+                            {activeTab === tab.id && (
+                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-sky-600 rounded-t-full"></div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Trips List */}
+                <div ref={containerRef} className="space-y-6 min-h-[400px]">
+                    {filteredTrips.length > 0 ? (
+                        filteredTrips.map((trip) => (
+                            <TripCard 
+                                key={trip.id} 
+                                trip={trip} 
+                                onClick={() => setSelectedTrip(trip)}
+                            />
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-slate-200 rounded-[2.5rem] bg-white/50">
+                            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 mb-6">
+                                <Plane size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">No {activeTab === 'draft' ? 'pending' : activeTab} trips found</h3>
+                            <p className="text-slate-500 max-w-xs mx-auto mb-8">Ready to explore somewhere new? Start planning your next adventure today.</p>
+                            <button onClick={() => setIsModalOpen(true)} className="text-sky-600 font-bold hover:underline">Plan a trip now</button>
+                        </div>
+                    )}
+                </div>
+            </>
+        )}
 
       </div>
       
       {/* Create Trip Modal */}
       {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-              <div ref={modalRef} className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative">
+              <div 
+                ref={modalRef} 
+                className="bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 relative flex flex-col"
+                onClick={() => setShowSuggestions(false)}
+              >
                   <button 
                     onClick={() => setIsModalOpen(false)}
                     className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors"
@@ -367,7 +599,7 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                   <h2 className="text-2xl font-bold font-display text-slate-900 mb-1">Plan New Adventure</h2>
                   <p className="text-slate-500 text-sm mb-6">Where are you heading next?</p>
                   
-                  <form onSubmit={handleCreateTrip} className="space-y-4">
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
                       <div>
                           <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Trip Title</label>
                           <input 
@@ -375,43 +607,73 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                             required
                             value={newTrip.title}
                             onChange={(e) => setNewTrip({...newTrip, title: e.target.value})}
-                            placeholder="e.g. Summer in Bali" 
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium"
+                            placeholder="e.g. Summer in Nepal" 
+                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
                           />
                       </div>
-                      <div>
-                          <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Destination</label>
+                      
+                      <div className="relative">
+                          <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Destination (Nepal)</label>
                           <div className="relative">
                               <input 
                                 type="text" 
                                 required
                                 value={newTrip.location}
-                                onChange={(e) => setNewTrip({...newTrip, location: e.target.value})}
-                                placeholder="e.g. Ubud, Indonesia" 
-                                className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium"
+                                onChange={handleLocationChange}
+                                onFocus={(e) => {
+                                    e.stopPropagation(); 
+                                    setSuggestions(NEPAL_DESTINATIONS);
+                                    setShowSuggestions(true);
+                                }}
+                                onClick={(e) => e.stopPropagation()} 
+                                placeholder="e.g. Pokhara" 
+                                className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-900 placeholder:text-slate-400"
                               />
                               <MapPin size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                           </div>
+                          
+                          {showSuggestions && (
+                              <div className="absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+                                  {suggestions.map((dest, i) => (
+                                      <button
+                                          key={i}
+                                          type="button"
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleSelectSuggestion(dest);
+                                          }}
+                                          className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center gap-3 transition-colors border-b border-slate-50 last:border-0 group"
+                                      >
+                                          <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                                              <img src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                          </div>
+                                          <span className="text-sm font-medium text-slate-700">{dest.name}</span>
+                                      </button>
+                                  ))}
+                                  {suggestions.length === 0 && (
+                                      <div className="p-4 text-xs text-slate-400 text-center font-bold">No destinations found</div>
+                                  )}
+                              </div>
+                          )}
                       </div>
+
                       <div className="grid grid-cols-2 gap-4">
                           <div>
                               <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">Start Date</label>
                               <input 
                                 type="date" 
-                                required
                                 value={newTrip.startDate}
                                 onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-600"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-900"
                               />
                           </div>
                           <div>
                               <label className="block text-xs font-bold uppercase text-slate-400 mb-1.5">End Date</label>
                               <input 
                                 type="date" 
-                                required
                                 value={newTrip.endDate}
                                 onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-600"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-sky-500 focus:bg-white outline-none transition-all font-medium text-slate-900"
                               />
                           </div>
                       </div>
@@ -420,12 +682,20 @@ const TripsPage = ({ onLogout, onNavigate, isLoggedIn }: { onLogout: () => void,
                           <button 
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors"
+                            className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors"
                           >
                               Cancel
                           </button>
                           <button 
-                            type="submit"
+                            type="button"
+                            onClick={() => handleCreateTrip(null, 'draft')}
+                            className="flex-1 py-3 bg-amber-100 text-amber-700 font-bold rounded-xl hover:bg-amber-200 transition-colors"
+                          >
+                              Save Draft
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => handleCreateTrip(null, 'upcoming')}
                             className="flex-1 py-3 bg-sky-600 text-white font-bold rounded-xl hover:bg-sky-700 shadow-lg shadow-sky-600/20 transition-all active:scale-95"
                           >
                               Create Trip

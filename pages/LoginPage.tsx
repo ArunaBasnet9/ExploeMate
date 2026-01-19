@@ -94,6 +94,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
   const [isLoading, setIsLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isWeatherExpanded, setIsWeatherExpanded] = useState(false);
+  const locationRef = useRef<{lat: number, lon: number} | null>(null);
   
   // Weather State
   const [weather, setWeather] = useState<WeatherData>({
@@ -146,36 +147,55 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
         }
     };
 
-    const initWeather = async () => {
-        setWeather(prev => ({ ...prev, loading: true }));
-        
+    const fetchWithIP = async () => {
         try {
-            // Attempt 1: GPS
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
-            });
-            await fetchWeatherForLocation(position.coords.latitude, position.coords.longitude);
-        } catch (gpsError) {
-            try {
-                // Attempt 2: IP
-                const ipRes = await fetch('https://ipwho.is/');
-                const ipData = await ipRes.json();
-                if (ipData.success) {
-                    await fetchWeatherForLocation(ipData.latitude, ipData.longitude);
-                } else {
-                    throw new Error("IP Geo failed");
-                }
-            } catch (ipError) {
-                // Attempt 3: Default
-                await fetchWeatherForLocation(27.7172, 85.3240);
+            const ipRes = await fetch('https://ipwho.is/');
+            const ipData = await ipRes.json();
+            if (ipData.success) {
+                locationRef.current = { lat: ipData.latitude, lon: ipData.longitude };
+                await fetchWeatherForLocation(ipData.latitude, ipData.longitude);
+            } else {
+                throw new Error("IP Geo failed");
             }
+        } catch (ipError) {
+            // Default Kathmandu
+            fetchWeatherForLocation(27.7172, 85.3240);
         }
     };
 
-    initWeather();
-    // Refresh weather every 1 minute
-    const intervalId = setInterval(initWeather, 60000);
-    return () => clearInterval(intervalId);
+    setWeather(prev => ({ ...prev, loading: true }));
+    let watchId: number | null = null;
+
+    if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                locationRef.current = { lat: latitude, lon: longitude };
+                fetchWeatherForLocation(latitude, longitude);
+            },
+            (error) => {
+                console.warn("Watch position error:", error);
+                if (!locationRef.current) {
+                    fetchWithIP();
+                }
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+        );
+    } else {
+        fetchWithIP();
+    }
+
+    // Refresh weather data every 5 minute
+    const intervalId = setInterval(() => {
+        if (locationRef.current) {
+            fetchWeatherForLocation(locationRef.current.lat, locationRef.current.lon);
+        }
+    }, 300000);
+
+    return () => {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        clearInterval(intervalId);
+    };
   }, []);
 
   // Auto-rotate slides

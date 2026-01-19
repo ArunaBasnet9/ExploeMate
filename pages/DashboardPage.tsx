@@ -31,6 +31,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
 
   const [aiSuggestion, setAiSuggestion] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const locationRef = useRef<{lat: number, lon: number} | null>(null);
   
   // Weather Description Helper
   const getWeatherDescription = (code: number) => {
@@ -43,7 +44,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
   };
 
   useEffect(() => {
-    const fetchWeatherForLocation = async (lat: number, lon: number, cityFallback?: string) => {
+    const fetchWeatherForLocation = async (lat: number, lon: number) => {
         try {
             // 1. Fetch Weather Data
             const weatherRes = await fetch(
@@ -53,24 +54,21 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
             if (!weatherRes.ok) throw new Error("Weather API Error");
             const weatherInfo = await weatherRes.json();
 
-            // 2. Determine Location Name
-            let locationName = cityFallback || "Unknown Location";
-            
-            if (!cityFallback) {
-                try {
-                    const geoRes = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
-                        { headers: { 'Accept-Language': 'en' } }
-                    );
-                    if (geoRes.ok) {
-                        const geoData = await geoRes.json();
-                        const addr = geoData.address || {};
-                        locationName = addr.city || addr.town || addr.village || addr.municipality || addr.county || geoData.name || "Local Area";
-                    }
-                } catch (e) {
-                    console.warn("Reverse geocoding failed", e);
-                    locationName = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+            // 2. Determine Location Name via Reverse Geocoding
+            let locationName = "Unknown Location";
+            try {
+                const geoRes = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`,
+                    { headers: { 'Accept-Language': 'en' } }
+                );
+                if (geoRes.ok) {
+                    const geoData = await geoRes.json();
+                    const addr = geoData.address || {};
+                    locationName = addr.city || addr.town || addr.village || addr.municipality || addr.county || geoData.name || "Local Area";
                 }
+            } catch (e) {
+                console.warn("Reverse geocoding failed", e);
+                locationName = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
             }
 
             // 3. Update State
@@ -94,44 +92,59 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
         }
     };
 
-    const initWeather = async () => {
-        // Only set loading on first load, not during background refreshes
-        setWeather(prev => ({ ...prev, loading: prev.location === 'Locating...' }));
-        
+    const fetchWithIP = async () => {
         try {
-            // Attempt 1: Browser Geolocation (GPS)
-            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
-            });
+            const ipRes = await fetch('https://ipwho.is/');
+            const ipData = await ipRes.json();
             
-            await fetchWeatherForLocation(position.coords.latitude, position.coords.longitude);
-            
-        } catch (gpsError) {
-            console.warn("GPS failed or denied, trying IP geolocation...", gpsError);
-            
-            try {
-                // Attempt 2: IP Geolocation (ipwho.is is free and CORS friendly)
-                const ipRes = await fetch('https://ipwho.is/');
-                const ipData = await ipRes.json();
-                
-                if (ipData.success) {
-                    await fetchWeatherForLocation(ipData.latitude, ipData.longitude, ipData.city);
-                } else {
-                    throw new Error("IP Geolocation failed");
-                }
-            } catch (ipError) {
-                console.error("All location methods failed, defaulting to Kathmandu.", ipError);
-                // Attempt 3: Default (Kathmandu)
-                await fetchWeatherForLocation(27.7172, 85.3240, "Kathmandu");
+            if (ipData.success) {
+                locationRef.current = { lat: ipData.latitude, lon: ipData.longitude };
+                await fetchWeatherForLocation(ipData.latitude, ipData.longitude);
+            } else {
+                throw new Error("IP Geolocation failed");
             }
+        } catch (ipError) {
+            console.error("IP fallback failed, defaulting to Kathmandu.", ipError);
+            fetchWeatherForLocation(27.7172, 85.3240); // Default
         }
     };
 
-    initWeather();
+    let watchId: number | null = null;
+
+    if (navigator.geolocation) {
+        // Use watchPosition to automatically update when location changes
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                // Basic check to see if we moved significantly could go here, 
+                // but open-meteo is fast enough to just call.
+                locationRef.current = { lat: latitude, lon: longitude };
+                fetchWeatherForLocation(latitude, longitude);
+            },
+            (error) => {
+                console.warn("GPS Watch Error:", error);
+                // Only fall back to IP if we haven't successfully located yet
+                if (!locationRef.current) {
+                    fetchWithIP();
+                }
+            },
+            { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
+        );
+    } else {
+        fetchWithIP();
+    }
     
-    // Refresh every 1 minute (60000ms)
-    const interval = setInterval(initWeather, 60000);
-    return () => clearInterval(interval);
+    // Refresh weather data every 5 minutes to keep temperature current even if location is static
+    const interval = setInterval(() => {
+        if (locationRef.current) {
+            fetchWeatherForLocation(locationRef.current.lat, locationRef.current.lon);
+        }
+    }, 300000); // 5 minutes
+
+    return () => {
+        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+        clearInterval(interval);
+    };
   }, []);
 
   // --- AI Suggestion Engine ---
@@ -385,7 +398,7 @@ const DashboardPage = ({ onLogout, onNavigate }: { onLogout: () => void, onNavig
                   </span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-grotesk font-bold mb-3 tracking-tight overflow-hidden">
-                    {splitText(weather.isDay === 0 ? "Good Evening, Rashoj!" : "Namaste, Rashoj!")}
+                    {splitText("Namaste, Rashoj!")}
                 </h1>
                 <p className="text-sky-100 max-w-md text-lg font-medium leading-relaxed opacity-90 pr-2">
                     {weather.loading ? (

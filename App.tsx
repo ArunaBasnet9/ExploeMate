@@ -25,7 +25,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
-  const percentRef = useRef<HTMLSpanElement>(null);
+  const loaderRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -47,6 +47,12 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
       gsap.set(path, { strokeDasharray: length, strokeDashoffset: length, opacity: 1 });
       gsap.set(".splash-char", { y: 100, opacity: 0, rotateX: -90 });
       gsap.set(".star", { opacity: 0, scale: 0 });
+      
+      // Setup Loader Ring
+      if (loaderRef.current) {
+          const circumference = 2 * Math.PI * 22; // r=22
+          gsap.set(loaderRef.current, { strokeDasharray: circumference, strokeDashoffset: circumference });
+      }
 
       // --- Animation Sequence ---
 
@@ -59,7 +65,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         ease: "power1.out"
       }, 0);
 
-      // 1. Draw Path & Move Plane
+      // 1. Draw Path & Move Plane & Fill Loader
       const progress = { value: 0 };
       
       tl.to(path, {
@@ -67,6 +73,15 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           duration: 2.5,
           ease: "power2.inOut"
       }, 0);
+      
+      // Animate Circular Loader stroke
+      if (loaderRef.current) {
+          tl.to(loaderRef.current, {
+              strokeDashoffset: 0,
+              duration: 2.5,
+              ease: "power2.inOut"
+          }, 0);
+      }
 
       tl.to(progress, {
           value: 1,
@@ -90,10 +105,6 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                       y: point.y,
                       rotation: angle
                   });
-              }
-              
-              if (percentRef.current) {
-                  percentRef.current.innerText = Math.round(progress.value * 100).toString();
               }
           }
       }, 0);
@@ -185,17 +196,44 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
 
         {/* Center Content */}
         <div className="relative z-10 flex flex-col items-center">
-            <div className="flex space-x-1 mb-6 overflow-hidden perspective-text">
+            <div className="flex space-x-1 mb-8 overflow-hidden perspective-text">
                 {chars}
             </div>
             
-            <div className="flex items-center gap-4 text-sky-400 font-mono text-sm tracking-[0.2em] uppercase backdrop-blur-sm px-4 py-2 rounded-full border border-sky-900/50 bg-slate-900/30">
-                <div className="w-8 h-[1px] bg-sky-500/50"></div>
-                <div className="flex items-center gap-2">
-                    <span className="animate-pulse">Loading System</span>
-                    <span className="font-bold text-white"><span ref={percentRef}>0</span>%</span>
+            {/* Modern Circular Loader */}
+            <div className="relative w-16 h-16">
+                {/* Rotating Outer Glow */}
+                <div className="absolute inset-0 bg-sky-500/20 rounded-full blur-xl animate-pulse"></div>
+                
+                {/* SVG Ring System */}
+                <svg className="w-full h-full transform -rotate-90">
+                    {/* Background Track */}
+                    <circle
+                        cx="32"
+                        cy="32"
+                        r="22"
+                        stroke="rgba(255, 255, 255, 0.1)"
+                        strokeWidth="4"
+                        fill="none"
+                    />
+                    {/* Animated Progress Ring */}
+                    <circle
+                        ref={loaderRef}
+                        cx="32"
+                        cy="32"
+                        r="22"
+                        stroke="#0ea5e9"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                        className="drop-shadow-[0_0_8px_rgba(14,165,233,0.8)]"
+                    />
+                </svg>
+                
+                {/* Center Dot */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_white]"></div>
                 </div>
-                <div className="w-8 h-[1px] bg-sky-500/50"></div>
             </div>
         </div>
     </div>
