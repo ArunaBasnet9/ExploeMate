@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Sparkles, ArrowRight, Globe, MapPin, Star, Heart, Compass, Zap, Coins, ArrowRightLeft, RefreshCw, TrendingUp } from 'lucide-react';
+import { Sparkles, ArrowRight, Globe, MapPin, Star, Heart, Compass, Zap, Coins, ArrowRightLeft, RefreshCw, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
 import { Navbar, Footer } from '../components/Navigation';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const DestinationCard = ({ image, title, location, rating, price, index }: any) => (
-  <div className="destination-card group relative overflow-hidden rounded-[2.5rem] bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 w-full border border-slate-100">
+  <div className="destination-card group relative overflow-hidden rounded-[2.5rem] bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 w-full border border-slate-100 animate-in fade-in slide-in-from-bottom-4">
     <div className="relative h-72 overflow-hidden rounded-[2.5rem]">
       <img src={image} alt={title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
       <button className="absolute top-4 right-4 p-3 bg-white/30 backdrop-blur-md rounded-full hover:bg-white text-white hover:text-red-500 transition-colors">
@@ -168,9 +168,77 @@ const CurrencyConverter = () => {
   );
 };
 
+// Expanded Destinations List
+const ALL_DESTINATIONS = [
+  {
+    title: "Everest Base Camp",
+    location: "Solukhumbu, Nepal",
+    rating: "4.9",
+    price: "1,400",
+    image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Phewa Lake Serenity",
+    location: "Pokhara, Nepal",
+    rating: "4.8",
+    price: "600",
+    image: "https://images.unsplash.com/photo-1546853899-709e50423661?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Bhaktapur Durbar Square",
+    location: "Bhaktapur, Nepal",
+    rating: "4.9",
+    price: "50",
+    image: "https://images.unsplash.com/photo-1596525712437-080c950294da?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Chitwan National Park",
+    location: "Chitwan, Nepal",
+    rating: "4.7",
+    price: "300",
+    image: "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Annapurna Circuit",
+    location: "Manang/Mustang, Nepal",
+    rating: "4.9",
+    price: "900",
+    image: "https://images.unsplash.com/photo-1590606086785-304e225439cb?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Lumbini Sacred Garden",
+    location: "Rupandehi, Nepal",
+    rating: "4.8",
+    price: "100",
+    image: "https://images.unsplash.com/photo-1570702172793-27b32c21943d?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Nagarkot Sunrise",
+    location: "Bhaktapur, Nepal",
+    rating: "4.6",
+    price: "150",
+    image: "https://images.unsplash.com/photo-1625763073739-c8eb7b9c6775?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Rara Lake",
+    location: "Mugu, Nepal",
+    rating: "4.9",
+    price: "750",
+    image: "https://images.unsplash.com/photo-1626014902263-12a912e9bd0b?auto=format&fit=crop&q=80&w=800"
+  },
+  {
+    title: "Patan Durbar Square",
+    location: "Lalitpur, Nepal",
+    rating: "4.8",
+    price: "40",
+    image: "https://images.unsplash.com/photo-1605640840605-14ac1855827b?auto=format&fit=crop&q=80&w=800"
+  }
+];
+
 const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) => void, isLoggedIn?: boolean }) => {
   const heroRef = useRef(null);
   const textRef = useRef(null);
+  const [showAllLocations, setShowAllLocations] = useState(false);
   
   useEffect(() => {
     const tl = gsap.timeline();
@@ -266,29 +334,7 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
     ));
   };
 
-  const popularDestinations = [
-    {
-      title: "Everest Base Camp",
-      location: "Solukhumbu, Nepal",
-      rating: "4.9",
-      price: "1,400",
-      image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      title: "Phewa Lake Serenity",
-      location: "Pokhara, Nepal",
-      rating: "4.8",
-      price: "600",
-      image: "https://images.unsplash.com/photo-1546853899-709e50423661?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      title: "Bhaktapur Durbar Square",
-      location: "Bhaktapur, Nepal",
-      rating: "4.9",
-      price: "50",
-      image: "https://images.unsplash.com/photo-1596525712437-080c950294da?auto=format&fit=crop&q=80&w=800"
-    }
-  ];
+  const visibleDestinations = showAllLocations ? ALL_DESTINATIONS : ALL_DESTINATIONS.slice(0, 3);
 
   return (
     <div className="w-full relative bg-slate-50/50">
@@ -376,16 +422,31 @@ const LandingPage = ({ onNavigate, isLoggedIn }: { onNavigate: (page: string) =>
                   <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-900 mb-4">Trending in Nepal</h2>
                   <p className="text-slate-500 text-lg max-w-md">Curated by AI based on current weather, festivals, and traveler reviews.</p>
                </div>
-               <button className="text-sky-600 font-bold hover:text-sky-700 flex items-center gap-2 group">
-                  View All Locations <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+               <button 
+                  onClick={() => setShowAllLocations(!showAllLocations)}
+                  className="text-sky-600 font-bold hover:text-sky-700 flex items-center gap-2 group transition-all"
+               >
+                  {showAllLocations ? "Show Less" : "View All Locations"} 
+                  {showAllLocations ? <ChevronUp size={20} /> : <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                </button>
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 destinations-grid">
-               {popularDestinations.map((dest, i) => (
+               {visibleDestinations.map((dest, i) => (
                   <DestinationCard key={i} {...dest} index={i} />
                ))}
             </div>
+            
+            {showAllLocations && (
+               <div className="mt-12 text-center">
+                  <button 
+                    onClick={() => setShowAllLocations(false)} 
+                    className="px-6 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-colors inline-flex items-center gap-2"
+                  >
+                     Show Less <ChevronUp size={16} />
+                  </button>
+               </div>
+            )}
          </div>
       </section>
 
