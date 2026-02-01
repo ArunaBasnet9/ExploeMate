@@ -533,7 +533,7 @@ const SignupPage = ({ onSignup, onNavigate }: { onSignup: () => void, onNavigate
                             <button 
                                 type="button"
                                 onClick={handleBack}
-                                className="px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                                className="px-6 h-16 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-colors border border-slate-200"
                             >
                                 Back
                             </button>
@@ -543,10 +543,10 @@ const SignupPage = ({ onSignup, onNavigate }: { onSignup: () => void, onNavigate
                             type={step === 3 ? "submit" : "button"}
                             onClick={step === 3 ? undefined : handleNext}
                             disabled={isLoading}
-                            className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-bold font-grotesk tracking-wide hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2 group"
+                            className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-bold font-grotesk tracking-wide hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2 group active:scale-[0.98]"
                         >
-                            <span>{step === 3 ? (isLoading ? 'Creating Account...' : 'Complete Signup') : 'Continue'}</span>
-                            {!isLoading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
+                            <span className="text-lg">{step === 3 ? (isLoading ? 'Creating Account...' : 'Complete Signup') : 'Continue'}</span>
+                            {!isLoading && <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />}
                         </button>
                     </div>
                 </form>
