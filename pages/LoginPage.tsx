@@ -39,7 +39,9 @@ const DecodingText = ({ text, className }: { text: string, className?: string })
     
     // Split text into spans for individual character control
     const chars = text.split('');
-    el.innerHTML = chars.map(char => `<span class="char" style="opacity:0; display:inline-block;">${char === ' ' ? '&nbsp;' : char}</span>`).join('');
+    el.innerHTML = chars.map(char => 
+      `<span class="char inline-block whitespace-pre" style="opacity:0;">${char === ' ' ? ' ' : char}</span>`
+    ).join('');
     
     const charElements = el.querySelectorAll('.char');
     const decodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
@@ -52,7 +54,7 @@ const DecodingText = ({ text, className }: { text: string, className?: string })
         stagger: 0.05,
         ease: "power2.out",
         onUpdate: function() {
-            // Randomly scramble characters that are not yet fully settled (hacky visual effect)
+            // Randomly scramble characters that are not yet fully settled
             const progress = this.progress();
             charElements.forEach((charEl, i) => {
                 if (progress < (i / chars.length) + 0.1 && Math.random() > 0.5) {
@@ -253,12 +255,13 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
     setIsLoading(true);
 
     setTimeout(() => {
-      if (email === 'rashojban@gmail.com' && password === '12345') {
+      // Updated logic: Accept non-empty credentials for demo purposes after removing hardcoded ones
+      if (email && password.length >= 5) {
         setIsLoading(false);
         onLogin();
       } else {
         setIsLoading(false);
-        setError('Invalid credentials. Try using the temporary login below.');
+        setError('Invalid credentials. Email is required and password must be at least 5 characters.');
         if (formRef.current) {
           gsap.fromTo(formRef.current, { x: -10 }, { x: 0, duration: 0.1, repeat: 5, yoyo: true });
         }
@@ -364,7 +367,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                 <Cpu size={14} /> Tourist Guide System
               </div>
               
-              {/* Decoding Title Animation */}
+              {/* Decoding Title Animation - Fixed Spacing */}
               <DecodingText 
                 text="Welcome to ExploreMate" 
                 className="text-5xl font-grotesk font-bold text-slate-900 mb-3 tracking-tight leading-tight min-h-[1.2em]" 
@@ -379,7 +382,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
               <InputField 
                 label="Email Address" 
                 type="email" 
-                placeholder="rashojban@gmail.com" 
+                placeholder="name@example.com" 
                 required 
                 icon={<User size={18} />}
                 value={email}
@@ -390,7 +393,7 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
                 <InputField 
                   label="Password" 
                   type={showPassword ? "text" : "password"} 
-                  placeholder="•••••" 
+                  placeholder="••••••••" 
                   required 
                   icon={
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="hover:text-sky-600 transition-colors focus:outline-none">
@@ -434,15 +437,6 @@ const LoginPage = ({ onLogin, onNavigate }: { onLogin: () => void, onNavigate: (
               <p className="text-slate-400 text-sm font-medium">
                 New to the system? <button onClick={() => onNavigate('signup')} className="font-bold text-sky-600 hover:text-sky-700 hover:underline">Create Account</button>
               </p>
-            </div>
-            
-            <div className="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-xl text-center backdrop-blur-sm">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Demo Credentials</p>
-              <div className="flex justify-center gap-4 text-xs font-mono text-slate-600 bg-white py-2 rounded-lg border border-slate-100 shadow-sm">
-                <span>User: rashojban@gmail.com</span>
-                <span className="w-px h-4 bg-slate-200"></span>
-                <span>Pass: 12345</span>
-              </div>
             </div>
           </div>
         </div>

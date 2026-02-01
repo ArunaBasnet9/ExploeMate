@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Twitter, Globe, Menu, X, Smartphone } from 'lucide-react';
+import { Twitter, Globe, Menu, X, Smartphone } from 'lucide-react';
+import { Logo } from './SharedUI';
 
 export const Footer = ({ onNavigate }: { onNavigate: (page: string) => void }) => (
   <footer className="bg-white pt-24 pb-12 border-t border-slate-100 relative z-10">
     <div className="max-w-7xl mx-auto px-4 md:px-8">
       <div className="grid md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => onNavigate('landing')}>
-            <div className="bg-sky-600 p-1.5 rounded-lg text-white">
-              <Plane size={18} className="-rotate-45" />
-            </div>
+            <div className="flex items-center gap-3 mb-6 cursor-pointer" onClick={() => onNavigate('landing')}>
+            <Logo className="w-8 h-8" />
             <span className="font-display font-bold text-xl text-sky-900">ExploreMate</span>
           </div>
           <p className="text-slate-500 text-sm leading-relaxed mb-6">
@@ -60,17 +59,16 @@ export const Navbar = ({ onNavigate, isLoggedIn = false }: { onNavigate: (page: 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Text color logic based on scroll state
   const textColor = scrolled ? 'text-sky-100 hover:text-white' : 'text-slate-600 hover:text-sky-600';
   const logoText = scrolled ? 'text-white' : 'text-sky-900';
-  const logoBg = scrolled ? 'bg-white text-sky-600' : 'bg-sky-600 text-white';
+  const logoBg = scrolled ? 'bg-white/10 backdrop-blur-md' : 'bg-transparent';
 
   return (
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-gradient-to-r from-sky-600 via-sky-600 to-blue-600 shadow-lg py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => onNavigate('landing')}>
-          <div className={`${logoBg} p-2 rounded-lg shadow-sm transition-colors duration-300`}>
-            <Plane size={20} className="-rotate-45" />
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('landing')}>
+          <div className={`${logoBg} p-1.5 rounded-xl shadow-sm transition-colors duration-300`}>
+            <Logo className="w-8 h-8" variant={scrolled ? "white" : "default"} />
           </div>
           <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${logoText}`}>ExploreMate</span>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { Plane, MapPin } from 'lucide-react';
-import { GlobalAestheticBackground } from './components/SharedUI';
+import { GlobalAestheticBackground, Logo } from './components/SharedUI';
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
 import NewsPage from './pages/NewsPage';
@@ -188,10 +188,9 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             />
         </svg>
 
-        {/* Plane Object */}
-        <div ref={planeRef} className="absolute top-0 left-0 -ml-10 -mt-10 w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.6)] z-20">
-            {/* Rotate inner icon -45deg so it points right (0deg) by default to match path calculation */}
-            <Plane className="text-sky-600 transform -rotate-45" size={40} strokeWidth={2.5} />
+        {/* Logo Object (Replaces Plane) */}
+        <div ref={planeRef} className="absolute top-0 left-0 -ml-10 -mt-10 w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(14,165,233,0.6)] z-20 overflow-hidden">
+            <Logo className="w-14 h-14" />
         </div>
 
         {/* Center Content */}
@@ -229,7 +228,6 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
                         className="drop-shadow-[0_0_8px_rgba(14,165,233,0.8)]"
                     />
                 </svg>
-                {/* Removed inner white spinner and dot as requested */}
             </div>
         </div>
     </div>
@@ -253,7 +251,6 @@ export default function App() {
       }
 
       // 2. Camera & Microphone
-      // Attempt to request media permissions. Note: Browsers may block this without user interaction.
       try {
         await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         console.log("Camera and Microphone granted");
@@ -331,7 +328,6 @@ export default function App() {
     <div className="min-h-screen w-full relative overflow-x-hidden">
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <GlobalAestheticBackground />
-      {/* We remove opacity transition here because the splash screen handles the reveal via clip-path */}
       <div className="relative z-0">
          {renderView()}
       </div>
